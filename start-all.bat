@@ -14,7 +14,7 @@ REM La pestaña de VSCode se cierra tras lanzar VSCode, y ng serve se ejecuta en
 wt ^
   --tabColor "#0078D7" --title "Apache" cmd /k "cd /d C:\xampp && apache_start.bat" ^
   ; new-tab --tabColor "#0078D7" --title "MySQL" cmd /k "cd /d C:\xampp && mysql_start.bat" ^
-  ; new-tab --tabColor "#43A047" --title "VSCode & Angular" cmd /k "cd /d C:\xampp\htdocs\CosmoViajesPlus && code -r . && timeout /t 2 >nul && cd cosmos-viajes-front && ng serve"
+  ; new-tab --tabColor "#43A047" --title "VSCode & Angular" cmd /k "cd /d C:\xampp\htdocs\CosmoViajes && code -r . && timeout /t 2 >nul && cd cosmos-viajes-front && ng serve"
 
 REM Abrir navegador después de un retraso
 timeout /t 10 >nul
