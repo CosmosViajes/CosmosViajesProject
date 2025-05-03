@@ -1,0 +1,67 @@
+<div class="cart-container">
+    <h2>Cesta de Compras</h2>
+    
+    <!-- Indicador de cuenta empresarial -->
+    <div *ngIf="isBusinessAccount()" class="business-badge">
+        <mat-icon>business</mat-icon>
+        <span>Cuenta Empresarial (15% de descuento)</span>
+    </div>
+
+    <div class="cart-items">
+        <div *ngFor="let trip of reservedTrips()" class="cart-item" (click)="viewTripDetails(trip)">
+            <div class="trip-info">
+                <h3>{{ trip.name || 'Nombre no disponible' }}</h3>
+                <p>{{ trip.description || 'Descripción no disponible' }}</p>
+                <div class="details">
+                    <span>Cantidad: {{ trip.quantity }}</span>
+                    <span>
+                        Precio unitario: 
+                        <span *ngIf="isBusinessAccount()" class="price-discount">
+                            <span class="original-price">{{ trip.originalPrice | currency:'EUR':'symbol':'1.2-2' }}</span>
+                            {{ trip.price | currency:'EUR':'symbol':'1.2-2' }}
+                            <span class="discount-badge">-15%</span>
+                        </span>
+                        <span *ngIf="!isBusinessAccount()">
+                            {{ trip.price | currency:'EUR':'symbol':'1.2-2' }}
+                        </span>
+                    </span>
+                </div>
+            </div>
+            <div class="price-section">
+                <span class="total-price">
+                    Total: {{ (trip.price * trip.quantity) | currency:'EUR':'symbol':'1.2-2' }}
+                </span>
+            </div>
+        </div>
+
+        <div *ngIf="reservedTrips().length === 0" class="empty-cart">
+            <mat-icon>remove_shopping_cart</mat-icon>
+            <p>No hay reservas en tu cesta</p>
+        </div>
+    </div>
+
+    <div class="cart-summary" *ngIf="reservedTrips().length > 0">
+        <div class="total">
+            <h3>Total a Pagar:</h3>
+            <span class="grand-total">
+                {{ totalPrice() | currency:'EUR':'symbol':'1.2-2' }}
+                <span *ngIf="isBusinessAccount()" class="total-discount">
+                    (Ahorro: {{ calculateSavings() | currency:'EUR':'symbol':'1.2-2' }})
+                </span>
+            </span>
+        </div>
+        
+        <mat-spinner *ngIf="isLoading()" diameter="40" class="spinner"></mat-spinner>
+
+        <div *ngIf="paymentError()" class="error-message">
+            {{ paymentError() }}
+        </div>
+
+        <button class="pay-button" 
+                (click)="processPayment()" 
+                [disabled]="isLoading() || totalPrice() <= 0">
+            <span *ngIf="!isLoading()">Pagar Todo</span>
+            <span *ngIf="isLoading()">Procesando...</span>
+        </button>
+    </div>
+</div>

@@ -1,0 +1,11 @@
+{
+    "/api": {
+      "target": "http://cosmoviajes.local",
+      "secure": false,
+      "changeOrigin": true,
+      "logLevel": "debug",
+      "pathRewrite": {
+        "^/api": ""
+      }
+    }
+}  

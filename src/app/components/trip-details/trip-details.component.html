@@ -1,0 +1,86 @@
+<div class="trip-details-container">
+  <button mat-icon-button class="close-button" (click)="closeDialog()">
+    <mat-icon>close</mat-icon>
+  </button>
+
+  <div class="trip-header">
+    <h1 class="trip-name">{{ trip?.name }}</h1>
+    <span class="trip-type" [ngClass]="getTypeClass(trip?.type)">
+      {{ trip?.type | uppercase }}
+    </span>
+  </div>
+
+  <div class="trip-body">
+    <div class="trip-image-container">
+      <img [src]="trip?.photo" alt="Imagen del viaje" class="trip-image">
+      <div class="price-badge">
+        <div *ngIf="isBusinessAccount()" class="discounted-price">
+          <span class="original-price">
+            {{ originalPrice | currency:'EUR':'symbol':'1.2-2' }}
+          </span>
+          <span class="current-price">
+            {{ finalPrice | currency:'EUR':'symbol':'1.2-2' }}
+          </span>
+          <span class="discount-badge">
+            <mat-icon>savings</mat-icon>
+            <span>15% descuento empresarial</span>
+          </span>
+        </div>
+      
+        <div *ngIf="!isBusinessAccount()" class="normal-price">
+          {{ finalPrice | currency:'EUR':'symbol':'1.2-2' }}
+        </div>
+      </div>
+    </div>
+
+    <div class="trip-meta">
+      <div class="meta-item">
+        <mat-icon class="meta-icon">flight_takeoff</mat-icon>
+        <div>
+          <p class="meta-label">Fecha de salida</p>
+          <p class="meta-value">{{ trip?.departure | date: 'dd/MM/yyyy' }}</p>
+        </div>
+      </div>
+
+      <div class="meta-item">
+        <mat-icon class="meta-icon">flight_land</mat-icon>
+        <div>
+          <p class="meta-label">Duración</p>
+          <p class="meta-value">{{ trip?.duration | date: 'dd-MM-yyyy'  }}</p>
+        </div>
+      </div>
+
+      <div class="meta-item">
+        <mat-icon class="meta-icon">group</mat-icon>
+        <div>
+          <p class="meta-label">Plazas disponibles</p>
+          <p class="meta-value">{{ trip?.capacity }} pasajeros</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="trip-description">
+      <h3>Descripción del viaje</h3>
+      <p>{{ trip?.description }}</p>
+    </div>
+
+    <div class="reservation-controls">
+      <button mat-raised-button 
+              color="primary" 
+              class="reserve-button"
+              (click)="addReservation()">
+        <mat-icon>add</mat-icon>
+        AÑADIR RESERVA
+      </button>
+      
+      <button mat-raised-button 
+              color="warn" 
+              class="cancel-button"
+              (click)="cancelReservation()"
+              *ngIf="hasReservation">
+        <mat-icon>delete</mat-icon>
+        ELIMINAR RESERVA
+      </button>
+    </div>
+  </div>
+</div>
