@@ -23,7 +23,7 @@ interface AuthStatus {
   providedIn: 'root',
 })
 export class AuthService {
-  private apiUrl = 'http://cosmoviajes.local/api';
+  private apiUrl = 'https://cosmosviajesbackend.onrender.com/api';
   public authStatus$ = new BehaviorSubject<AuthStatus>({ isAuthenticated: false });
   public reservedTrips$ = new BehaviorSubject<any[]>([]);
 

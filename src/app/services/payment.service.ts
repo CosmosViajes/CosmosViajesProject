@@ -7,7 +7,7 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class PaymentService {
-  private apiUrl = `http://cosmoviajes.local/api/payments`;
+  private apiUrl = `https://cosmosviajesbackend.onrender.com/api/payments`;
 
   constructor(private http: HttpClient) { }
 

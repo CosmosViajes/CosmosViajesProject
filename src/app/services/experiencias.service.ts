@@ -5,7 +5,7 @@ import { AuthService } from './auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class ExperienciasService {
-  private apiUrl = 'http://cosmoviajes.local/api/';
+  private apiUrl = 'https://cosmosviajesbackend.onrender.com/api/';
 
   constructor(
     private http: HttpClient,

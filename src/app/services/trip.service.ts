@@ -8,7 +8,7 @@ import { Flight } from '../models/flight.model';
   providedIn: 'root'
 })
 export class TripService {
-  private apiUrl = 'http://cosmoviajes.local/api';
+  private apiUrl = 'https://cosmosviajesbackend.onrender.com/api';
 
   constructor(private http: HttpClient) {}
 

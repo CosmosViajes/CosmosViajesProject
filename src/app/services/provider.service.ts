@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class ProviderService {
-  private readonly API = 'http://cosmoviajes.local/api';
+  private readonly API = 'https://cosmosviajesbackend.onrender.com/api';
 
   constructor(private http: HttpClient) { }
 

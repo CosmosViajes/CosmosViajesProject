@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class StatsService {
-  private apiUrl = 'http://cosmoviajes.local/api/stats';
+  private apiUrl = 'https://cosmosviajesbackend.onrender.com/api/stats';
 
   constructor(private http: HttpClient) {}
 

@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 
 @Injectable({ providedIn: 'root' })
 export class RequestService {
-  private apiUrl = 'http://cosmoviajes.local/api';
+  private apiUrl = 'https://cosmosviajesbackend.onrender.com/api';
 
   constructor(private http: HttpClient) {}
 
