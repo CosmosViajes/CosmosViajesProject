@@ -17,10 +17,10 @@ export const appConfig: ApplicationConfig = {
       provide: JWT_OPTIONS,
       useValue: {
         tokenGetter: tokenGetter,
-        allowedDomains: ['cosmoviajes.local'],
+        allowedDomains: ['https://cosmosviajesbackend.onrender.com/'],
         disallowedRoutes: [
-          'http://cosmoviajes.local/login',
-          'http://cosmoviajes.local/register'
+          'https://cosmosviajesbackend.onrender.com/login',
+          'https://cosmosviajesbackend.onrender.com/register'
         ]
       }
     },

@@ -1,6 +1,6 @@
 {
     "/api": {
-      "target": "http://cosmoviajes.local",
+      "target": "https://cosmosviajesbackend.onrender.com",
       "secure": false,
       "changeOrigin": true,
       "logLevel": "debug",
