@@ -49,7 +49,7 @@ import Swal from 'sweetalert2';
                 @for (comment of comments; track comment.id) {
                   <mat-card class="comment-card">
                     <div class="comment-header">
-                      <span class="user">{{ comment.user }}</span>
+                      <span class="userName">{{ comment.userName }}</span>
                       <span class="date">{{ comment.date | date:'mediumDate' }}</span>
                     </div>
                     <p class="comment-text">{{ comment.text }}</p>
@@ -208,7 +208,7 @@ import Swal from 'sweetalert2';
         margin-bottom: 1rem;
         flex-wrap: wrap;
         
-        .user {
+        .userName {
           font-weight: 500;
           color: #42a5f5;
         }
@@ -551,7 +551,7 @@ export class ExperienciasComponent implements AfterViewInit, OnInit, OnDestroy {
         id: img.id,
         url: img.image,
         description: img.description,
-        user_id: img.user_id  // ¡Este es el campo clave que faltaba!
+        user_id: img.user_id
       }));
     });
   }  
@@ -604,7 +604,7 @@ export class ExperienciasComponent implements AfterViewInit, OnInit, OnDestroy {
   
       this.experienciasService.addExperiencia({
         user_Id: userId,
-        user: userName,
+        userName: userName,
         text: this.newComment
       }).subscribe({
         next: (newExp) => {
