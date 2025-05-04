@@ -3,7 +3,7 @@
 html, body {
   margin: 0;
   padding: 0;
-  height: auto; /* Permite que crezca según el contenido */
+  height: auto !important; /* Permite que crezca según el contenido */
   min-height: 100%; /* Asegura que siempre ocupe al menos el viewport */
 }
 
@@ -144,3 +144,23 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; background-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@media (max-width: 768px) {
+  html, body {
+    width: 100vw !important;
+    overflow-x: hidden !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .flights-container {
+    min-height: 100vh !important;
+    height: auto !important;
+  }
+
+  /* Asegura fondo negro uniforme */
+  body {
+    background-color: black !important;
+  }
+}

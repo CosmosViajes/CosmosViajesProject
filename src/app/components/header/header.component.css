@@ -2,7 +2,11 @@
   width: 100%;
   position: fixed;
   top: 0;
-  z-index: 1000; /* Asegura que el encabezado esté por encima de otros elementos */
+  z-index: 1000;
+}
+
+.header-space {
+  height: 120px; /* Aumentado desde 112px */
 }
 
 .title-bar {
@@ -13,6 +17,7 @@
   background-color: #1e1e1e;
   position: relative; /* Permite posicionar elementos dentro del contenedor */
   z-index: 1100; /* Asegura que el título esté por encima de la animación */
+  height: 60px;
 }
 
 .auth-section {
@@ -240,6 +245,7 @@ a.mat-button.active {
   }
 
   .auth-section {
+    left: -1rem;
     position: absolute;
     right: 15px;
     top: 10px;
@@ -252,7 +258,7 @@ a.mat-button.active {
 
   .menu-access {
     top: 10px;
-    left: 15px; /* Alinea el botón de menú a la izquierda */
+    right: 15px; /* Alinea el botón de menú a la izquierda */
   }
 }
 
@@ -272,4 +278,19 @@ a.mat-button.active {
 .admin-tabs {
   min-width: 800px;
   min-height: 500px;
+}
+
+@media (max-width: 768px) {
+  .auth-section {
+    flex-direction: column !important; /* Apila verticalmente */
+    top: auto !important;
+    width: 150px; /* Ancho fijo para contenedor */
+  }
+
+  .auth-button {
+    width: 100% !important; /* Ocupa todo el ancho del contenedor */
+    margin: 0 !important; /* Elimina márgenes horizontales */
+    justify-content: center; /* Centra el texto en los botones */
+    height: 20px;
+  }
 }

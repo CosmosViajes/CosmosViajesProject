@@ -1,174 +1,306 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy  } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FlightCardComponent } from '../flight-card/flight-card.component';
 import { SearchBarComponent } from '../search-bar/search-bar.component';
 import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
 import { TripService } from '../../services/trip.service';
 import { Flight } from '../../models/flight.model';
+import { trigger, state, style, transition, animate } from '@angular/animations';
+import { timer, Subscription } from 'rxjs';
+import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
   selector: 'app-flights-list',
   standalone: true,
-  imports: [CommonModule, FlightCardComponent, SearchBarComponent, MatIconModule],
+  imports: [CommonModule, FlightCardComponent, SearchBarComponent, MatIconModule, MatButtonModule],
+  animations: [
+    trigger('spin', [
+      state('searching', style({ transform: 'rotate(0deg)' })),
+      state('idle', style({ transform: 'rotate(360deg)' })),
+      transition('searching => idle', animate('2000ms linear'))
+    ]),
+    trigger('fadeInOut', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateY(20px)' }),
+        animate('300ms ease-out', 
+          style({ opacity: 1, transform: 'translateY(0)' }))
+      ]),
+      transition(':leave', [
+        animate('200ms ease-in', 
+          style({ opacity: 0, transform: 'translateY(20px)' }))
+      ])
+    ])
+  ],
   template: `
-<section class="flights-container bg-[#04040a] py-10 w-full min-h-screen relative overflow-hidden">
-  <!-- Estrellas dinámicas -->
-  <div class="stars absolute top-0 left-0 w-full h-full z-[1]">
-    <div
-      *ngFor="let star of starsArray"
-      class="dynamic-star"
-      [style.top]="star.top"
-      [style.left]="star.left"
-      [style.opacity]="star.opacity"
-    ></div>
-  </div>
-
-  <!-- Parte Superior -->
-  <div class="top-section relative w-full h-[20%] z-[20]">
-    <!-- Luna -->
-    <div class="moon absolute top-0 left-0 w-full">
-      <div class="moon-circle absolute rounded-full bg-gray-400"
-        style="
-          transform: translate(-50%, 50%);
-          clip: rect(auto, auto, auto, 0px);
-          width: 20%;
-          height: 40vh;
-          bottom: 50px;
-          left: 0%;
-        ">
+<section class="flights-container bg-[#04040a] w-full min-h-screen relative overflow-hidden flex flex-col">
+      <!-- Loading inicial -->
+      <div *ngIf="isLoading" class="fullscreen-loader">
+        <svg class="w-16 h-16 text-yellow-500 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+        </svg>
+        <p class="text-xl text-white mt-4">Cargando vuelos disponibles...</p>
       </div>
-    </div>
 
-    <!-- Título -->
-    <h2 class="section-title text-4xl font-extrabold text-center text-yellow-400 mb-4">
-      PRÓXIMOS VUELOS DISPONIBLES
-    </h2>
-
-    <!-- Buscador -->
-    <div class="search-section relative max-w-4xl mx-auto">
-      <app-search-bar (searchChange)="filterFlights($event)"></app-search-bar>
-    </div>
-  </div>
-
-  <!-- Parte Central -->
-  <div class="middle-section relative w-full h-[60%] z-[30]">
-    <!-- Listado de vuelos -->
-    <div class="flights-list flex flex-col gap-4 px-8 w-full">
-      <ng-container *ngIf="filteredFlights.length > 0; else noResults">
-        <app-flight-card
-          *ngFor="let flight of filteredFlights"
-          [flight]="flight"
-          class="w-full"
-        ></app-flight-card>
-      </ng-container>
-
-      <ng-template #noResults>
-        <div class="no-results flex flex-col items-center justify-center text-center text-yellow-400 col-span-full">
-          <mat-icon class="text-yellow-500 text-7xl mb-6">search_off</mat-icon>
-          <p class="text-2xl font-medium text-gray-300">No se encontraron vuelos que coincidan con "{{ currentSearch }}"</p>
+      <!-- Contenido principal -->
+      <div *ngIf="!isLoading" class="flex flex-col h-full">
+        <!-- Estrellas dinámicas -->
+        <div class="stars absolute top-0 left-0 w-full h-full z-[1] pointer-events-none">
+          <div
+            *ngFor="let star of starsArray"
+            class="dynamic-star"
+            [style.top]="star.top"
+            [style.left]="star.left"
+            [style.opacity]="star.opacity"
+          ></div>
         </div>
-      </ng-template>
-    </div>
-  </div>
 
-  <!-- Parte Inferior -->
-  <div class="bottom-section relative w-full h-[150px] z-[20]">
-    <!-- Tierra -->
-    <div class="earth absolute bottom-0 left-0 w-full">
-      <div class="earth-circle absolute rounded-full bg-green-500"
-        style="
-          margin-top: 10px;
-          transform: translate(-50%, 50%);
-          clip: rect(auto, auto, auto, 0px);
-          width: 20%;
-          height: 40vh;
-          top: -300px;
-          left: 100%;
-        ">
+        <!-- Parte Superior (10vh) -->
+        <div class="top-section relative min-h-[10vh] flex flex-col items-center justify-center z-[20] px-4 pt-4">
+          <!-- Título -->
+          <h2 class="section-title text-3xl md:text-4xl font-extrabold text-center text-yellow-400 mb-2">
+            PRÓXIMOS VUELOS DISPONIBLES
+          </h2>
+
+          <!-- Buscador -->
+          <div class="search-section relative w-full max-w-4xl">
+            <app-search-bar (searchChange)="filterFlights($event)"></app-search-bar>
+          </div>
+        </div>
+
+        <!-- Parte Central (80vh) -->
+        <div class="middle-section relative min-h-[80vh] flex-1 z-[30] overflow-y-auto px-4 md:px-8">
+          <!-- Listado de vuelos -->
+          <div *ngIf="showUpdateNotification" 
+              @fadeInOut
+              class="fixed bottom-4 right-4 bg-gray-800 text-white p-4 rounded-lg shadow-lg z-[9999]">
+            <div class="flex items-center gap-3">
+              <mat-icon class="text-yellow-500">notifications</mat-icon>
+              <div>
+                <p class="font-medium">¡Nuevos vuelos disponibles!</p>
+                <p class="text-sm opacity-75">Haz click para actualizar la lista</p>
+              </div>
+              <button mat-icon-button (click)="handleManualRefresh()">
+                <mat-icon>refresh</mat-icon>
+              </button>
+            </div>
+          </div>
+          <div class="flights-list flex flex-col gap-4 w-full pb-4">
+            <ng-container *ngIf="filteredFlights.length > 0; else noResults">
+              <app-flight-card
+                *ngFor="let flight of filteredFlights"
+                [flight]="flight"
+                class="w-full"
+              ></app-flight-card>
+            </ng-container>
+
+            <ng-template #noResults>
+              <div class="no-results flex flex-col items-center justify-center text-center text-yellow-400 h-full py-8">
+                <!-- Animación durante la búsqueda -->
+                <div *ngIf="searching" class="mb-6 flex flex-col items-center">
+                  <svg class="w-16 h-16 text-yellow-500 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                  </svg>
+                  <p class="text-xl md:text-2xl font-medium text-gray-300 mt-2">Buscando vuelos...</p>
+                </div>
+
+                <!-- Resultado cuando no hay coincidencias -->
+                <div *ngIf="!searching && showNoResults">
+                  <p class="text-xl md:text-2xl font-medium text-gray-300">
+                    No se encontraron vuelos que coincidan con "{{ currentSearch }}"
+                  </p>
+                </div>
+              </div>
+            </ng-template>
+          </div>
+        </div>
+
+        <!-- Estado de actualización automática -->
+        <div *ngIf="lastUpdated" class="text-center text-gray-400 pb-2">
+          Última actualización: {{ lastUpdated | date:'HH:mm:ss' }}
+          <span *ngIf="isCheckingForUpdates" class="ml-2">
+            <mat-icon class="animate-pulse text-sm">autorenew</mat-icon>
+          </span>
+        </div>
       </div>
-    </div>
-  </div>
-
-  <!-- Cohete -->
-  <div
-    class="rocket absolute"
-    [ngStyle]="{
-      top: rocketPosition.top,
-      left: rocketPosition.left,
-      transform: 'scale(' + rocketScale + ') rotate(' + rocketRotation + 'deg)',
-      opacity: rocketOpacity,
-      zIndex: rocketZIndex
-    }"
-  >
-    <img src="assets/rocket.png" alt="Cohete" class="w-[50px] h-auto" />
-  </div>
-</section>
+    </section>
 `,
   styles: [`
 
-section {
-  height: 100vh;
+/* Asegurar que la parte superior tenga z-index alto */
+.top-section {
+  position: relative;
+  z-index: 50; /* Mayor que el menú (ejemplo: menú z-40) */
+  padding-top: 1rem; /* Espacio extra para evitar tapado */
 }
 
+/* Ajusta el contenedor principal para que no quede oculto bajo el menú fijo */
 .flights-container {
-  position: relative;
-  overflow: hidden;
+  padding-top: 70px; /* Altura aproximada del menú fijo */
+  box-sizing: border-box;
+  height: calc(100vh - 70px); /* Ajustar altura para scroll correcto */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Si el menú tiene z-index 40, aseguramos que el contenido tenga más */
+nav.menu {
+  z-index: 40;
+  position: fixed;
+  top: 0;
+  width: 100%;
+}
+
+/* Si usas Angular Material u otro menú, ajusta su z-index para que quede detrás */
+.mat-mdc-sidenav-container {
+  z-index: 30 !important;
 }
 
 .moon {
-  position: absolute;
+  position: absolute; /* Cambiar a posición fija */
+  top: -50px;       /* Ajustar según necesidad */
+  left: 20px;
+  width: 25vw;
+  height: 25vw;
+  z-index: 25;
 }
 
 .moon-circle {
-  position: absolute;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
+  background-color: #a0aec0; /* gris claro */
+  transform: translate(-50%, -50%);
 }
 
+/* Tamaño y posición de la tierra */
 .earth {
   position: absolute;
+  bottom: 1rem;   /* Un poco más arriba del borde */
+  right: 1rem;    /* Un poco más a la izquierda del borde */
+  width: 20vw;    /* Más grande que antes */
+  height: 20vw;
+  z-index: 30;
 }
 
 .earth-circle {
-  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-color: #22c55e; /* verde */
+  transform: translate(50%, 50%);
 }
 
-.clouds {
-  position: absolute;
+.middle-section {
+  position: relative; /* Para que la tierra se posicione dentro */
 }
 
-.stars {
-  position: absolute;
+/* Ajustes para móvil */
+@media (max-width: 768px) {
+  .moon {
+    width: 20vw !important;
+    height: 20vw !important;
+    top: -5rem !important;
+    left: 1rem !important;
+  }
+  
+  .section-title {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Luna aún más pequeña en móvil */
+  .moon-circle {
+    width: 20vw !important;
+    height: 20vw !important;
+  }
+
+  .earth {
+    width: 25vw !important;
+    height: 25vw !important;
+    bottom: 10px !important;
+    right: 10px !important;
+  }
+
+  .earth-circle {
+    width: 30vw !important;  /* Tamaño adecuado */
+    height: 30vw !important;
+  }
 }
 
 .dynamic-star {
   position: absolute;
-  width: 3px; /* Tamaño visible */
-  height: 3px; /* Tamaño visible */
-  background-color:rgba(252, 242, 100, 0.99); /* Color blanco brillante */
+  width: 3px;
+  height: 3px;
+  background-color: rgba(252, 242, 100, 0.99);
+  border-radius: 50%;
+  pointer-events: none;
 }
 
-.rocket {
-  transition:
-    top 60s linear,
-    left 60s linear,
-    transform 50s linear,
-    opacity 60s linear;
-  transform-origin: center; /* Para que la rotación sea desde el centro */
+.fullscreen-loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 1000;
 }
+
+/* Añadir estas transiciones */
+.no-results {
+  transition: opacity 0.3s ease;
+}
+
+.animate-spin {
+  animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.fixed {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  min-width: 250px;
+}
+
+.shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
 `],
 })
-export class FlightsListComponent implements OnInit {
+export class FlightsListComponent implements OnInit, OnDestroy {
   starsArray: { top: string; left: string; opacity: number; transition: boolean }[] = [];
+
+  showNoResults = false;
+  searchTimer: any;
+  searching = false;
+
+  isLoading = true;
+  showRefresh = false;
+  lastUpdated?: Date;
+  isCheckingForUpdates = false;
+
+  private pollingSubscription?: Subscription;
+
+  private previousFlights: Flight[] = [];
+  showUpdateNotification = false;
+  private isComponentAlive = true;
+  private pollingInterval = 10000; // 10 segundos
 
   moonSizePercentage = "30%"; 
   earthSizePercentage = "30%"; 
-
-  // Propiedades del cohete
-  rocketPosition = { top: '100%', left: '100%' }; // Posición inicial (abajo derecha)
-  rocketScale = 1; // Tamaño inicial del cohete
-  rocketOpacity = 1; // Opacidad inicial del cohete
-  rocketZIndex = 10; // Z-index del cohete para superposición
-  rocketRotation = -45;
 
   generateStars(): void {
     const totalStars = 500;
@@ -204,48 +336,24 @@ export class FlightsListComponent implements OnInit {
   ngOnInit(): void {
     this.loadFlights();
     this.generateStars();
+    this.startPolling();
 
     setInterval(() => {
       this.updateRandomStars();
     }, Math.random() * (1000 - 500) + 500);
 
-    this.startRocketAnimation();
   }
 
-  startRocketAnimation(): void {
-    let goingUp = true;
+  handleManualRefresh(): void {
+    this.showUpdateNotification = false;
+    this.loadFlights();
+  }
 
-    const animate = () => {
-      if (goingUp) {
-        // Animación de abajo derecha a arriba izquierda
-        this.rocketRotation = 135;
-        this.rocketPosition = { top: '0%', left: '0%' };
-        setTimeout(() => {
-        }, 60000); // Reducir tamaño antes de llegar (2 segundos después de empezar)
-      } else {
-        // Animación de arriba izquierda a abajo derecha
-        this.rocketRotation = -45;
-        this.rocketPosition = { top: '100%', left: '100%' };
-        setTimeout(() => {
-        }, 60000); // Reducir tamaño antes de llegar (2 segundos después de empezar)
-      }
-
-      setTimeout(() => {
-        goingUp = !goingUp; // Cambiar dirección
-        this.rocketScale = 1; // Restaurar tamaño
-        this.rocketOpacity = 1; // Restaurar opacidad
-
-        if (goingUp) {
-          this.rocketPosition = { top: '100%', left: '100%' }; // Reiniciar posición inicial
-        } else {
-          this.rocketPosition = { top: '0%', left: '0%' }; // Reiniciar posición inicial inversa
-        }
-      }, 120000); // Esperar a que termine la animación actual
-
-      setTimeout(animate, goingUp ? 120000 : 120000); // Esperar antes de iniciar la siguiente animación
-    };
-
-    animate();
+  // Modifica ngOnDestroy
+  ngOnDestroy(): void {
+    this.isComponentAlive = false;
+    this.pollingSubscription?.unsubscribe();
+    if (this.searchTimer) clearTimeout(this.searchTimer);
   }
 
   flights: Flight[] = [];
@@ -255,34 +363,120 @@ export class FlightsListComponent implements OnInit {
   constructor(private tripService: TripService) {}
 
   loadFlights(): void {
+    this.isLoading = true;
+    this.showRefresh = false;
+    
     this.tripService.getFlights().subscribe({
+      next: (data) => this.handleFlightData(data),
+      error: (err) => {
+        console.error('Error al cargar vuelos:', err);
+        this.isLoading = false;
+        this.showRefresh = true;
+      }
+    });
+  }
+
+  private startPolling(): void {
+    this.pollingSubscription = timer(0, this.pollingInterval).pipe(
+      takeWhile(() => this.isComponentAlive),
+      switchMap(() => {
+        if (!this.isLoading) this.isCheckingForUpdates = true;
+        return this.tripService.getFlights();
+      }),
+      distinctUntilChanged((prev, curr) => 
+        JSON.stringify(prev) === JSON.stringify(this.previousFlights)
+      )
+    ).subscribe({
       next: (data) => {
-        this.flights = data.map((flight) => ({
+        const newFlights = data.map(flight => ({
           ...flight,
-          companyLogoUrl:
-            flight.company?.logo_url || 'assets/default-company-logo.png',
+          companyLogoUrl: flight.company?.logo_url || 'assets/default-company-logo.png'
         }));
-        this.filteredFlights = this.flights;
+        
+        if (this.haveFlightsChanged(newFlights)) {
+          this.handleNewFlightsDetected(newFlights);
+        }
+        
+        this.isCheckingForUpdates = false;
+        this.lastUpdated = new Date();
       },
       error: (err) => {
-        console.error('Error al cargar los vuelos:', err);
-      },
+        console.error('Error en actualización automática:', err);
+        this.isCheckingForUpdates = false;
+      }
     });
+  }
+
+  private haveFlightsChanged(newFlights: Flight[]): boolean {
+    return JSON.stringify(newFlights) !== JSON.stringify(this.previousFlights);
+  }
+
+  // Nuevo método para manejar nuevos vuelos detectados
+  private handleNewFlightsDetected(newFlights: Flight[]): void {
+    const addedFlights = newFlights.filter(nf => 
+      !this.previousFlights.some(pf => pf.id === nf.id)
+    );
+    
+    const removedFlights = this.previousFlights.filter(pf => 
+      !newFlights.some(nf => nf.id === pf.id)
+    );
+
+    if (addedFlights.length > 0 || removedFlights.length > 0) {
+      this.showUpdateNotification = true;
+      setTimeout(() => this.showUpdateNotification = false, 5000);
+    }
+    
+    this.previousFlights = [...newFlights];
+  }
+
+  animationState = 'idle';
+
+  private handleFlightData(data: Flight[]): void {
+    this.flights = data.map(flight => ({
+      ...flight,
+      companyLogoUrl: flight.company?.logo_url || 'assets/default-company-logo.png'
+    }));
+    
+    this.filterFlights(this.currentSearch);
+    this.isLoading = false;
+    this.showRefresh = this.flights.length === 0;
+    this.lastUpdated = new Date();
   }
 
   filterFlights(searchTerm: string): void {
     this.currentSearch = searchTerm.toLowerCase();
+    
+    // Limpiar timer anterior y resetear estados
+    if (this.searchTimer) {
+      clearTimeout(this.searchTimer);
+      this.searching = false;
+      this.showNoResults = false;
+    }
+
     if (!searchTerm) {
       this.filteredFlights = this.flights;
       return;
     }
 
-    this.filteredFlights = this.flights.filter((flight) =>
-      (flight.name?.toLowerCase() || '').includes(this.currentSearch) ||
-      (flight.company?.name?.toLowerCase() || '').includes(this.currentSearch) ||
-      (flight.type?.toLowerCase() || '').includes(this.currentSearch) ||
-      (new Date(flight.departure).toLocaleDateString('es-ES') || '').includes(this.currentSearch) ||
-      (flight.duration?.toString() || '').includes(this.currentSearch)
-    );
+    // Activar animación de búsqueda
+    this.searching = true;
+
+    this.searchTimer = setTimeout(() => {
+      this.filteredFlights = this.flights.filter((flight) =>
+        (flight.name?.toLowerCase() || '').includes(this.currentSearch) ||
+        (flight.company?.name?.toLowerCase() || '').includes(this.currentSearch) ||
+        (flight.type?.toLowerCase() || '').includes(this.currentSearch) ||
+        (new Date(flight.departure).toLocaleDateString('es-ES') || '').includes(this.currentSearch) ||
+        (flight.duration?.toString() || '').includes(this.currentSearch)
+      );
+      this.searching = false;
+      this.showNoResults = this.filteredFlights.length === 0;
+    }, 3000);
+  }
+
+  onAnimationDone() {
+    if (this.searching) {
+      this.animationState = 'searching';
+    }
   }
 }
