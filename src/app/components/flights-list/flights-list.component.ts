@@ -70,7 +70,7 @@ import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
         </div>
 
         <!-- Parte Central (80vh) -->
-        <div class="middle-section relative min-h-[80vh] flex-1 z-[30] overflow-y-auto px-4 md:px-8">
+        <div class="middle-section relative min-h-[80vh] flex-1 z-[30] overflow-y-auto px-4 md:px-8" style="margin-top: 25px;">
           <!-- Listado de vuelos -->
           <div *ngIf="showUpdateNotification" 
               @fadeInOut
@@ -158,76 +158,18 @@ nav.menu {
   z-index: 30 !important;
 }
 
-.moon {
-  position: absolute; /* Cambiar a posición fija */
-  top: -50px;       /* Ajustar según necesidad */
-  left: 20px;
-  width: 25vw;
-  height: 25vw;
-  z-index: 25;
-}
-
-.moon-circle {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background-color: #a0aec0; /* gris claro */
-  transform: translate(-50%, -50%);
-}
-
-/* Tamaño y posición de la tierra */
-.earth {
-  position: absolute;
-  bottom: 1rem;   /* Un poco más arriba del borde */
-  right: 1rem;    /* Un poco más a la izquierda del borde */
-  width: 20vw;    /* Más grande que antes */
-  height: 20vw;
-  z-index: 30;
-}
-
-.earth-circle {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background-color: #22c55e; /* verde */
-  transform: translate(50%, 50%);
-}
-
 .middle-section {
   position: relative; /* Para que la tierra se posicione dentro */
 }
 
 /* Ajustes para móvil */
 @media (max-width: 768px) {
-  .moon {
-    width: 20vw !important;
-    height: 20vw !important;
-    top: -5rem !important;
-    left: 1rem !important;
-  }
   
   .section-title {
     font-size: 1.8rem;
     margin-bottom: 0.5rem;
   }
-
-  /* Luna aún más pequeña en móvil */
-  .moon-circle {
-    width: 20vw !important;
-    height: 20vw !important;
-  }
-
-  .earth {
-    width: 25vw !important;
-    height: 25vw !important;
-    bottom: 10px !important;
-    right: 10px !important;
-  }
-
-  .earth-circle {
-    width: 30vw !important;  /* Tamaño adecuado */
-    height: 30vw !important;
-  }
+  
 }
 
 .dynamic-star {
@@ -298,9 +240,6 @@ export class FlightsListComponent implements OnInit, OnDestroy {
   showUpdateNotification = false;
   private isComponentAlive = true;
   private pollingInterval = 10000; // 10 segundos
-
-  moonSizePercentage = "30%"; 
-  earthSizePercentage = "30%"; 
 
   generateStars(): void {
     const totalStars = 500;
