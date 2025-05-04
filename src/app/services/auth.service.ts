@@ -42,9 +42,6 @@ export class AuthService {
     const token = localStorage.getItem('token');
     if (token && !this.jwtHelper.isTokenExpired(token)) {
       const decodedToken = this.jwtHelper.decodeToken(token);
-      
-      // Depuración: Verifica el token decodificado
-      console.log('Token decodificado:', decodedToken);
   
       this.authStatus$.next({
         isAuthenticated: true,
@@ -273,21 +270,6 @@ export class AuthService {
   }
 
   updateUser(userId: number, formData: FormData): Observable<any> {
-    // Mostrar todos los datos del FormData
-    console.log('------ DATOS QUE SE ENVIARÁN ------');
-    console.log('Endpoint:', `${this.apiUrl}/users/${userId}/update`);
-
-    // Iterar sobre todas las entradas del FormData
-    formData.forEach((value, key) => {
-      if (value instanceof File) {
-        console.log(`${key}:`, `Archivo (Nombre: ${value.name}, Tipo: ${value.type}, Tamaño: ${(value.size / 1024).toFixed(2)} KB)`);
-      } else {
-        console.log(`${key}:`, value);
-      }
-    });
-
-    console.log('-----------------------------------');
-
     return this.http.post(`${this.apiUrl}/users/${userId}/update`, formData);
   }
 
