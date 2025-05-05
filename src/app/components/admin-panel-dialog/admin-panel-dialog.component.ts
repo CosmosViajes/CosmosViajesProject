@@ -908,17 +908,17 @@ export class AdminPanelDialogComponent {
                           .toLocaleString('es-ES', {month: 'short'})
                           .replace('.', ''); // Ej: "Ene"
 
-          // Buscar por número de mes o nombre corto
-          const existing = safeData.find(d => 
+          // Buscar por número de mes (backend debe enviar 1-12)
+          const existing = (rawData || []).find(d => 
               Number(d.label) === monthNumber || 
               d.label.toLowerCase() === monthName.toLowerCase()
           );
           
-          return {
-              name: monthName,
-              value: existing?.total || 0,
-              extra: { type: label }
-          };
+          return (rawData || []).map(item => ({
+            name: item.label,
+            value: Math.round(Number(item.total) || 0),
+            extra: { type: label }
+        }));
       });
     }
 
@@ -946,28 +946,20 @@ export class AdminPanelDialogComponent {
       return `${day} ${monthNames[month]}`;
     }
     if (this.selectedPeriod === 'year') {
-      const englishToShort = {
-        'January': 'Ene',
-        'February': 'Feb',
-        'March': 'Mar',
-        'April': 'Abr',
-        'May': 'May',
-        'June': 'Jun',
-        'July': 'Jul',
-        'August': 'Ago',
-        'September': 'Sep',
-        'October': 'Oct',
-        'November': 'Nov',
-        'December': 'Dic'
-    } as const;
+      // Si el tick es número (1-12), convertirlo a abreviatura
+      if (typeof tick === 'number') {
+          return this.translateMonthByNumber(tick);
+      }
+      // Si es texto en inglés, traducirlo
+      const englishToShort: {[key: string]: string} = {
+          'January': 'Ene', 'February': 'Feb', 'March': 'Mar',
+          'April': 'Abr', 'May': 'May', 'June': 'Jun', 
+          'July': 'Jul', 'August': 'Ago', 'September': 'Sep',
+          'October': 'Oct', 'November': 'Nov', 'December': 'Dic'
+      };
+      return englishToShort[tick] || tick;
+  }
 
-    type MonthKey = keyof typeof englishToShort;
-    if (typeof tick === 'string' && tick in englishToShort) {
-      return englishToShort[tick as MonthKey]; // <-- Añade la aserción de tipo
-    }
-      return tick;
-    }
-    // Para otros casos, deja el valor tal cual
     return tick;
   };
   
