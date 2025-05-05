@@ -887,7 +887,7 @@ export class AdminPanelDialogComponent {
             // El backend debe devolver d.label como número de día (1,2,3...)
             const existing = data.find(d => Number(d.label) === day);
             completeData.push({
-                name: day.toString(),
+                //name: day.toString(),
                 value: existing?.total || 0,
                 extra: { type: label }
             });
@@ -902,17 +902,17 @@ export class AdminPanelDialogComponent {
 
     if (this.selectedPeriod === 'year') {
       return Array.from({length: 12}, (_, index) => {
-          const monthNumber = index + 1;
-          const existing = safeData.find(d => 
-              Number(d.label) === monthNumber || 
-              d.label === new Date(2024, index, 1).toLocaleString('en-US', {month: 'long'})
-          );
-          
-          return {
-              name: this.translateMonthByNumber(monthNumber),
-              value: existing?.total || 0, // <-- 0 si no hay datos
-              extra: { type: label }
-          };
+        const monthNumber = index + 1;
+        const existing = safeData.find(d => 
+            Number(d.label) === monthNumber || 
+            d.label === new Date(2024, index, 1).toLocaleString('en-US', {month: 'long'})
+        );
+        
+        return {
+            name: this.translateMonthByNumber(monthNumber),
+            value: existing?.total || 0,
+            extra: { type: label }
+        };
       });
     }
 

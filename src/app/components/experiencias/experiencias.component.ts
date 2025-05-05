@@ -745,8 +745,7 @@ export class ExperienciasComponent implements AfterViewInit, OnInit, OnDestroy {
   isCurrentUserImage(image: any): boolean {
     const authStatus = this.authService.authStatus$.getValue();
     
-    return authStatus?.isAuthenticated && 
-           authStatus.userData?.id === image.user_id;
+    return authStatus?.isAuthenticated && authStatus.userData?.id === image.user_id;
   }  
 
 }
