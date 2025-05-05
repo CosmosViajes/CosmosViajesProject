@@ -895,27 +895,21 @@ export class AdminPanelDialogComponent {
         return completeData;
     }
 
-    const safeData = data.map(item => ({
-      label: item.label,
-      total: Math.round(Number(item.total)) || 0 // Fuerza número entero
-    }));
-
     if (this.selectedPeriod === 'year') {
       return Array.from({length: 12}, (_, index) => {
-          const monthNumber = index + 1;
-          const existing = (rawData || []).find(d => 
-              Number(d.label) === monthNumber
-          );
-          
-          return {
-              name: this.translateMonthByNumber(monthNumber),
-              value: existing?.total || 0,
-              extra: { type: label }
-          };
+        const monthNumber = index + 1;
+        const existing = (rawData || []).find(d => Number(d.label) === monthNumber);
+        return {
+          name: this.translateMonthByNumber(monthNumber),
+          value: existing?.total || 0,
+          extra: { type: label }
+        };
       });
     }
 
-    return (rawData || []).map(item => ({
+    const safeData = (rawData || []).filter(d => d && d.label !== undefined && d.total !== undefined);
+
+    return (safeData || []).map(item => ({
         name: item.label,
         value: Math.round(Number(item.total) || 0),
         extra: { type: label }
@@ -929,23 +923,27 @@ export class AdminPanelDialogComponent {
         9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dic'
     };
     return months[monthNumber] || '';
-}
+  }
 
-  xAxisTickFormatter = (tick: string | number) => {
+  xAxisTickFormatter = (tick: string | number | undefined) => {
+    if (tick === undefined || tick === null) return '';
+    
     if (this.selectedPeriod === 'month') {
       const day = tick.toString().padStart(2, '0');
       const month = this.selectedMonth.getMonth();
       const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
       return `${day} ${monthNames[month]}`;
     }
+    
     if (this.selectedPeriod === 'year') {
       if (typeof tick === 'number') {
-          return this.translateMonthByNumber(tick);
+        return this.translateMonthByNumber(tick);
       }
-      return this.translateMonthByNumber(parseInt(tick, 10));
+      const numTick = parseInt(tick, 10);
+      return isNaN(numTick) ? tick : this.translateMonthByNumber(numTick);
     }
     
-    return tick;
+    return tick.toString();
   };
   
   yAxisTickFormatter = (value: number): string => {
