@@ -37,7 +37,7 @@ import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
   <!-- Contenido principal -->
   <div *ngIf="!isLoading" class="flex flex-col h-full">
     <!-- Estrellas dinámicas -->
-    <div class="stars absolute top-0 left-0 w-full h-full z-[1] pointer-events-none">
+    <div class="stars top-0 left-0 w-full h-full z-[1] pointer-events-none">
       <div
         *ngFor="let star of starsArray"
         class="dynamic-star"
@@ -61,7 +61,7 @@ import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
     </div>
 
     <!-- Parte Central (80vh) -->
-    <div class="middle-section relative min-h-[80vh] flex-1 z-[30] overflow-y-auto px-4 md:px-8">
+    <div class="middle-section relative min-h-[80vh] flex-1 z-[30] overflow-y-auto px-4 md:px-8" style="margin-top: 25px;">
       <!-- Notificación de actualización -->
       <div *ngIf="showUpdateNotification" 
            @fadeInOut
@@ -192,16 +192,6 @@ nav.menu {
 
 .middle-section {
   position: relative;
-}
-
-.absolute {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  z-index: 50;
 }
 
 .fixed {
