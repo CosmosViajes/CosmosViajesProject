@@ -865,16 +865,16 @@ export class AdminPanelDialogComponent {
   private formatChartData(rawData: any[] | undefined, label: string): any[] {
       const data = rawData || [];
 
-      if (this.selectedPeriod === 'day') {
-        return Array.from({length: 24}, (_, hour) => {
-            const utcHour = hour.toString().padStart(2, '0');
-            const existing = data.find(d => d.label === `${utcHour}:00`);
-            return {
-                name: `${utcHour}:00`,
-                value: existing?.total || 0,
-                extra: { type: label }
-            };
-        });
+    if (this.selectedPeriod === 'day') {
+      return Array.from({length: 24}, (_, hour) => {
+          const utcHour = hour.toString().padStart(2, '0');
+          const existing = data.find(d => d.label === `${utcHour}:00`);
+          return {
+              name: `${utcHour}:00`,
+              value: existing?.total || 0,
+              extra: { type: label }
+          };
+      });
     }
 
     if (this.selectedPeriod === 'month') {
@@ -895,10 +895,12 @@ export class AdminPanelDialogComponent {
         return completeData;
     }
 
-    const safeData = data.map(item => ({
-      label: item.label,
-      total: Math.round(Number(item.total)) || 0 // Fuerza número entero
-    }));
+    const safeData = data
+      .filter(item => item?.label !== undefined && item?.total !== undefined)
+      .map(item => ({
+        label: String(item.label), // Convertir a string
+        total: Math.round(Number(item.total)) || 0
+      }));
 
     if (this.selectedPeriod === 'year') {
       const currentYear = this.selectedYear;
@@ -922,7 +924,7 @@ export class AdminPanelDialogComponent {
       });
     }
 
-    return data.map(item => ({
+    return safeData.map(item => ({
         name: item.label,
         value: Math.round(Number(item.total) || 0),
         extra: { type: label }
