@@ -1,10 +1,9 @@
 import { AuthService } from '../../services/auth.service';
 import { Component, HostListener, OnInit, inject, signal } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { DomSanitizer } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { MatDialog } from '@angular/material/dialog';
@@ -51,7 +50,6 @@ export class HeaderComponent implements OnInit {
   private jwtHelper = inject(JwtHelperService);
   private dialog = inject(MatDialog);
   authService = inject(AuthService);
-  private sanitizer = inject(DomSanitizer);
 
   ngOnInit() {
     this.checkContentHeight();
@@ -116,10 +114,6 @@ export class HeaderComponent implements OnInit {
     this.reservedTrips = grouped;
   }
 
-  get shouldShowMenu(): boolean {
-    return window.pageYOffset === 0 || this.isManuallyOpened || this.forceKeepMenu;
-  }
-
   private checkContentHeight(): void {
     setTimeout(() => {
       const contentHeight = Math.max(
@@ -130,7 +124,7 @@ export class HeaderComponent implements OnInit {
         document.documentElement.offsetHeight
       );
       this.forceKeepMenu = contentHeight <= window.innerHeight + 1;
-    }, 100);
+    }, 1);
   }
 
   loadReservedTrips(userId: number): void {
@@ -277,11 +271,14 @@ export class HeaderComponent implements OnInit {
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
-
-    if (this.showUserMenu && !target.closest('.user-menu') && !target.closest('.avatar')) {
-      this.closeUserMenu();
+    const isMenuButton = target.closest('.menu-access');
+    const isInMenu = target.closest('.nav-container');
+    
+    if (!isMenuButton && !isInMenu) {
+      this.closeMenu();
     }
   }
+
 
   logout() {
     this.authService.logout();
@@ -293,11 +290,11 @@ export class HeaderComponent implements OnInit {
   }
 
   @HostListener('window:scroll')
-  onWindowScroll() {
+  onWindowScroll(): void {
     const currentScroll = window.pageYOffset;
     const scrollingDown = currentScroll > this.lastScrollPosition;
 
-    if (scrollingDown && currentScroll > 100 && !this.isManuallyOpened && !this.forceKeepMenu) {
+    if (currentScroll > 0 && scrollingDown && !this.isManuallyOpened && !this.forceKeepMenu) {
       this.closeMenu();
     } else if (currentScroll === 0) {
       this.isManuallyOpened = false;
@@ -305,6 +302,10 @@ export class HeaderComponent implements OnInit {
     }
 
     this.lastScrollPosition = currentScroll;
+  }
+
+  get shouldShowMenu(): boolean {
+    return window.pageYOffset === 0 || this.isManuallyOpened || this.forceKeepMenu;
   }
 
   openMenuTemporarily(): void {

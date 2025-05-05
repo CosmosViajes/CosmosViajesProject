@@ -49,7 +49,6 @@
       <a mat-button routerLink="/" routerLinkActive="active" (click)="resetTimer()">EXPLORAR</a>
       <a mat-button routerLink="/experiencias" routerLinkActive="active" (click)="resetTimer()">EXPERIENCIAS</a>
       <a mat-button routerLink="/empresas" routerLinkActive="active" (click)="resetTimer()">EMPRESAS</a>
-      <a mat-button routerLink="/contacto" routerLinkActive="active" (click)="resetTimer()">CONTACTO</a>
       <button mat-icon-button class="close-button" (click)="closeMenu()">
         <mat-icon>close</mat-icon>
       </button>
@@ -58,7 +57,7 @@
 
   <!-- Botón de menú alineado a la izquierda -->
   <ng-container *ngIf="!shouldShowMenu">
-    <button class="menu-access left-align" mat-icon-button (click)="openMenuTemporarily()">
+    <button class="menu-access rigth-align" mat-icon-button (click)="openMenuTemporarily()">
       <mat-icon>menu</mat-icon>
     </button>
   </ng-container>

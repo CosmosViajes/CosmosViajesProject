@@ -221,11 +221,6 @@ a.mat-button.active {
 }
 
 @media (max-width: 768px) {
-  .main-nav {
-    flex-direction: column;
-    gap: 0.5rem;
-    padding: 1rem 0;
-  }
 
   .user-menu {
     left: auto; /* Ajusta la posición automáticamente según el contenedor */
@@ -239,26 +234,25 @@ a.mat-button.active {
     padding: 0.75rem 0;
   }
 
-  .close-button {
-    position: static;
-    margin-top: 10px;
-  }
-
   .auth-section {
     left: -1rem;
     position: absolute;
     right: 15px;
-    top: 10px;
     flex-wrap: wrap; /* Permite que los elementos se ajusten en varias líneas */
+    flex-direction: column !important; /* Apila verticalmente */
+    top: auto !important;
+    width: 150px;
+  }
+
+  .auth-button {
+    width: 100% !important; /* Ocupa todo el ancho del contenedor */
+    margin: 0 !important; /* Elimina márgenes horizontales */
+    justify-content: center; /* Centra el texto en los botones */
+    height: 20px;
   }
 
   .logo {
     margin: auto; /* Centra el logo incluso en pantallas pequeñas */
-  }
-
-  .menu-access {
-    top: 10px;
-    right: 15px; /* Alinea el botón de menú a la izquierda */
   }
 }
 
@@ -278,19 +272,4 @@ a.mat-button.active {
 .admin-tabs {
   min-width: 800px;
   min-height: 500px;
-}
-
-@media (max-width: 768px) {
-  .auth-section {
-    flex-direction: column !important; /* Apila verticalmente */
-    top: auto !important;
-    width: 150px; /* Ancho fijo para contenedor */
-  }
-
-  .auth-button {
-    width: 100% !important; /* Ocupa todo el ancho del contenedor */
-    margin: 0 !important; /* Elimina márgenes horizontales */
-    justify-content: center; /* Centra el texto en los botones */
-    height: 20px;
-  }
 }
