@@ -34,98 +34,88 @@ import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
   ],
   template: `
 <section class="flights-container bg-[#04040a] w-full min-h-screen relative overflow-hidden flex flex-col">
-      <!-- Loading inicial -->
-      <div *ngIf="isLoading" class="fullscreen-loader">
-        <svg class="w-16 h-16 text-yellow-500 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-        </svg>
-        <p class="text-xl text-white mt-4">Cargando vuelos disponibles...</p>
+  <!-- Contenido principal -->
+  <div *ngIf="!isLoading" class="flex flex-col h-full">
+    <!-- Estrellas dinámicas -->
+    <div class="stars absolute top-0 left-0 w-full h-full z-[1] pointer-events-none">
+      <div
+        *ngFor="let star of starsArray"
+        class="dynamic-star"
+        [style.top]="star.top"
+        [style.left]="star.left"
+        [style.opacity]="star.opacity"
+      ></div>
+    </div>
+
+    <!-- Parte Superior (10vh) -->
+    <div class="top-section relative min-h-[10vh] flex flex-col items-center justify-center z-[20] px-4 pt-4">
+      <!-- Título -->
+      <h2 class="section-title text-3xl md:text-4xl font-extrabold text-center text-yellow-400 mb-2">
+        PRÓXIMOS VUELOS DISPONIBLES
+      </h2>
+
+      <!-- Buscador -->
+      <div class="search-section relative w-full max-w-4xl">
+        <app-search-bar (searchChange)="filterFlights($event)"></app-search-bar>
       </div>
+    </div>
 
-      <!-- Contenido principal -->
-      <div *ngIf="!isLoading" class="flex flex-col h-full">
-        <!-- Estrellas dinámicas -->
-        <div class="stars absolute top-0 left-0 w-full h-full z-[1] pointer-events-none">
-          <div
-            *ngFor="let star of starsArray"
-            class="dynamic-star"
-            [style.top]="star.top"
-            [style.left]="star.left"
-            [style.opacity]="star.opacity"
-          ></div>
-        </div>
-
-        <!-- Parte Superior (10vh) -->
-        <div class="top-section relative min-h-[10vh] flex flex-col items-center justify-center z-[20] px-4 pt-4">
-          <!-- Título -->
-          <h2 class="section-title text-3xl md:text-4xl font-extrabold text-center text-yellow-400 mb-2">
-            PRÓXIMOS VUELOS DISPONIBLES
-          </h2>
-
-          <!-- Buscador -->
-          <div class="search-section relative w-full max-w-4xl">
-            <app-search-bar (searchChange)="filterFlights($event)"></app-search-bar>
+    <!-- Parte Central (80vh) -->
+    <div class="middle-section relative min-h-[80vh] flex-1 z-[30] overflow-y-auto px-4 md:px-8">
+      <!-- Notificación de actualización -->
+      <div *ngIf="showUpdateNotification" 
+           @fadeInOut
+           class="fixed bottom-4 right-4 bg-gray-800 text-white p-4 rounded-lg shadow-lg z-[9999]">
+        <div class="flex items-center gap-3">
+          <mat-icon class="text-yellow-500">notifications</mat-icon>
+          <div>
+            <p class="font-medium">¡Nuevos vuelos disponibles!</p>
+            <button (click)="handleManualRefresh()" class="text-yellow-400 hover:text-yellow-300 mt-1">
+              Actualizar lista
+            </button>
           </div>
         </div>
+      </div>
 
-        <!-- Parte Central (80vh) -->
-        <div class="middle-section relative min-h-[80vh] flex-1 z-[30] overflow-y-auto px-4 md:px-8" style="margin-top: 25px;">
-          <!-- Listado de vuelos -->
-          <div *ngIf="showUpdateNotification" 
-              @fadeInOut
-              class="fixed bottom-4 right-4 bg-gray-800 text-white p-4 rounded-lg shadow-lg z-[9999]">
-            <div class="flex items-center gap-3">
-              <mat-icon class="text-yellow-500">notifications</mat-icon>
-              <div>
-                <p class="font-medium">¡Nuevos vuelos disponibles!</p>
-                <p class="text-sm opacity-75">Haz click para actualizar la lista</p>
-              </div>
-              <button mat-icon-button (click)="handleManualRefresh()">
-                <mat-icon>refresh</mat-icon>
-              </button>
+      <!-- Listado de vuelos -->
+      <div class="flights-list flex flex-col gap-4 w-full pb-4">
+        <ng-container *ngIf="filteredFlights.length > 0; else noResults">
+          <app-flight-card
+            *ngFor="let flight of filteredFlights"
+            [flight]="flight"
+            class="w-full"
+          ></app-flight-card>
+        </ng-container>
+
+        <ng-template #noResults>
+          <div class="no-results flex flex-col items-center justify-center text-center text-yellow-400 h-full py-8">
+            <div *ngIf="searching" class="mb-6 flex flex-col items-center">
+              <svg class="w-16 h-16 text-yellow-500 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+              </svg>
+              <p class="text-xl md:text-2xl font-medium text-gray-300 mt-2">Buscando vuelos...</p>
+            </div>
+
+            <div *ngIf="!searching && showNoResults">
+              <p class="text-xl md:text-2xl font-medium text-gray-300">
+                No se encontraron vuelos que coincidan con "{{ currentSearch }}"
+              </p>
             </div>
           </div>
-          <div class="flights-list flex flex-col gap-4 w-full pb-4">
-            <ng-container *ngIf="filteredFlights.length > 0; else noResults">
-              <app-flight-card
-                *ngFor="let flight of filteredFlights"
-                [flight]="flight"
-                class="w-full"
-              ></app-flight-card>
-            </ng-container>
-
-            <ng-template #noResults>
-              <div class="no-results flex flex-col items-center justify-center text-center text-yellow-400 h-full py-8">
-                <!-- Animación durante la búsqueda -->
-                <div *ngIf="searching" class="mb-6 flex flex-col items-center">
-                  <svg class="w-16 h-16 text-yellow-500 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-                  </svg>
-                  <p class="text-xl md:text-2xl font-medium text-gray-300 mt-2">Buscando vuelos...</p>
-                </div>
-
-                <!-- Resultado cuando no hay coincidencias -->
-                <div *ngIf="!searching && showNoResults">
-                  <p class="text-xl md:text-2xl font-medium text-gray-300">
-                    No se encontraron vuelos que coincidan con "{{ currentSearch }}"
-                  </p>
-                </div>
-              </div>
-            </ng-template>
-          </div>
-        </div>
-
-        <!-- Estado de actualización automática -->
-        <div *ngIf="lastUpdated" class="text-center text-gray-400 pb-2">
-          Última actualización: {{ lastUpdated | date:'HH:mm:ss' }}
-          <span *ngIf="isCheckingForUpdates" class="ml-2">
-            <mat-icon class="animate-pulse text-sm">autorenew</mat-icon>
-          </span>
-        </div>
+        </ng-template>
       </div>
-    </section>
+    </div>
+
+    <!-- Estado de actualización automática -->
+    <div *ngIf="lastUpdated" class="text-center text-gray-400 pb-2">
+      Última actualización: {{ lastUpdated | date:'HH:mm:ss' }}
+      <span *ngIf="isCheckingForUpdates" class="ml-2">
+        <mat-icon class="animate-pulse text-sm">autorenew</mat-icon>
+      </span>
+    </div>
+  </div>
+</section>
 `,
   styles: [`
 
@@ -200,13 +190,18 @@ nav.menu {
   transition: opacity 0.3s ease;
 }
 
-.animate-spin {
-  animation: spin 1.5s linear infinite;
+.middle-section {
+  position: relative;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.absolute {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 50;
 }
 
 .fixed {
@@ -214,6 +209,16 @@ nav.menu {
   bottom: 1rem;
   right: 1rem;
   min-width: 250px;
+  z-index: 1000;
+}
+
+.animate-spin {
+  animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .shadow-lg {
@@ -234,7 +239,17 @@ export class FlightsListComponent implements OnInit, OnDestroy {
   lastUpdated?: Date;
   isCheckingForUpdates = false;
 
+  hasError = false;
+  flights: Flight[] = [];
+  filteredFlights: Flight[] = [];
+
   private pollingSubscription?: Subscription;
+
+  
+  initialLoad = true;
+  loadTimer: any;
+  currentSearch = '';
+  constructor(private tripService: TripService) {}
 
   private previousFlights: Flight[] = [];
   showUpdateNotification = false;
@@ -273,14 +288,26 @@ export class FlightsListComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.loadFlights();
+    this.startInitialLoad();
     this.generateStars();
-    this.startPolling();
 
     setInterval(() => {
       this.updateRandomStars();
     }, Math.random() * (1000 - 500) + 500);
 
+  }
+
+  private startInitialLoad(): void {
+    this.isLoading = true;
+    this.hasError = false;
+    
+    // Timer mínimo de 2 segundos para la carga inicial
+    this.loadTimer = setTimeout(() => {
+      this.isLoading = false;
+    }, 2000);
+
+    this.loadFlights();
+    this.startPolling();
   }
 
   handleManualRefresh(): void {
@@ -295,24 +322,32 @@ export class FlightsListComponent implements OnInit, OnDestroy {
     if (this.searchTimer) clearTimeout(this.searchTimer);
   }
 
-  flights: Flight[] = [];
-  filteredFlights: Flight[] = [];
-  currentSearch = '';
-
-  constructor(private tripService: TripService) {}
-
   loadFlights(): void {
-    this.isLoading = true;
-    this.showRefresh = false;
-    
     this.tripService.getFlights().subscribe({
-      next: (data) => this.handleFlightData(data),
+      next: (data) => {
+        this.handleFlightData(data);
+        this.clearLoadTimer();
+      },
       error: (err) => {
-        console.error('Error al cargar vuelos:', err);
-        this.isLoading = false;
-        this.showRefresh = true;
+        this.handleLoadError(err);
+        this.clearLoadTimer();
       }
     });
+  }
+
+  private clearLoadTimer(): void {
+    if (this.loadTimer) {
+      clearTimeout(this.loadTimer);
+      this.isLoading = false;
+    }
+  }
+
+  private handleLoadError(err: any): void {
+    console.error('Error al cargar vuelos:', err);
+    this.hasError = true;
+    this.flights = [];
+    this.filteredFlights = [];
+    this.initialLoad = false;
   }
 
   private startPolling(): void {
@@ -384,24 +419,13 @@ export class FlightsListComponent implements OnInit, OnDestroy {
 
   filterFlights(searchTerm: string): void {
     this.currentSearch = searchTerm.toLowerCase();
-    
-    // Limpiar timer anterior y resetear estados
-    if (this.searchTimer) {
-      clearTimeout(this.searchTimer);
-      this.searching = false;
-      this.showNoResults = false;
-    }
-
-    if (!searchTerm) {
-      this.filteredFlights = this.flights;
-      return;
-    }
-
-    // Activar animación de búsqueda
     this.searching = true;
+    this.showNoResults = false;
+
+    if (this.searchTimer) clearTimeout(this.searchTimer);
 
     this.searchTimer = setTimeout(() => {
-      this.filteredFlights = this.flights.filter((flight) =>
+      this.filteredFlights = this.flights.filter(flight => 
         (flight.name?.toLowerCase() || '').includes(this.currentSearch) ||
         (flight.company?.name?.toLowerCase() || '').includes(this.currentSearch) ||
         (flight.type?.toLowerCase() || '').includes(this.currentSearch) ||
@@ -416,6 +440,19 @@ export class FlightsListComponent implements OnInit, OnDestroy {
   onAnimationDone() {
     if (this.searching) {
       this.animationState = 'searching';
+    }
+  }
+
+  private checkForFlightChanges(newFlights: Flight[]): void {
+    const currentIds = this.flights.map(f => f.id);
+    const newIds = newFlights.map(f => f.id);
+    
+    const added = newFlights.filter(f => !currentIds.includes(f.id));
+    const removed = this.flights.filter(f => !newIds.includes(f.id));
+
+    if (added.length > 0 || removed.length > 0) {
+      this.showUpdateNotification = true;
+      setTimeout(() => this.showUpdateNotification = false, 5000);
     }
   }
 }
