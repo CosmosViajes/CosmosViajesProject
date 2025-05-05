@@ -865,16 +865,16 @@ export class AdminPanelDialogComponent {
   private formatChartData(rawData: any[] | undefined, label: string): any[] {
       const data = rawData || [];
 
-    if (this.selectedPeriod === 'day') {
-      return Array.from({length: 24}, (_, hour) => {
-          const utcHour = hour.toString().padStart(2, '0');
-          const existing = data.find(d => d.label === `${utcHour}:00`);
-          return {
-              name: `${utcHour}:00`,
-              value: existing?.total || 0,
-              extra: { type: label }
-          };
-      });
+      if (this.selectedPeriod === 'day') {
+        return Array.from({length: 24}, (_, hour) => {
+            const utcHour = hour.toString().padStart(2, '0');
+            const existing = data.find(d => d.label === `${utcHour}:00`);
+            return {
+                name: `${utcHour}:00`,
+                value: existing?.total || 0,
+                extra: { type: label }
+            };
+        });
     }
 
     if (this.selectedPeriod === 'month') {
@@ -895,36 +895,27 @@ export class AdminPanelDialogComponent {
         return completeData;
     }
 
-    const safeData = data
-      .filter(item => item?.label !== undefined && item?.total !== undefined)
-      .map(item => ({
-        label: String(item.label), // Convertir a string
-        total: Math.round(Number(item.total)) || 0
-      }));
+    const safeData = data.map(item => ({
+      label: item.label,
+      total: Math.round(Number(item.total)) || 0 // Fuerza número entero
+    }));
 
     if (this.selectedPeriod === 'year') {
-      const currentYear = this.selectedYear;
       return Array.from({length: 12}, (_, index) => {
           const monthNumber = index + 1;
-          const monthName = new Date(currentYear, index, 1)
-                          .toLocaleString('es-ES', {month: 'short'})
-                          .replace('.', ''); // Ej: "Ene"
-
-          // Buscar por número de mes (backend debe enviar 1-12)
           const existing = (rawData || []).find(d => 
-              Number(d.label) === monthNumber || 
-              d.label.toLowerCase() === monthName.toLowerCase()
+              Number(d.label) === monthNumber
           );
           
-          return (rawData || []).map(item => ({
-            name: item.label,
-            value: Math.round(Number(item.total) || 0),
-            extra: { type: label }
-        }));
+          return {
+              name: this.translateMonthByNumber(monthNumber),
+              value: existing?.total || 0,
+              extra: { type: label }
+          };
       });
     }
 
-    return safeData.map(item => ({
+    return (rawData || []).map(item => ({
         name: item.label,
         value: Math.round(Number(item.total) || 0),
         extra: { type: label }
@@ -948,20 +939,12 @@ export class AdminPanelDialogComponent {
       return `${day} ${monthNames[month]}`;
     }
     if (this.selectedPeriod === 'year') {
-      // Si el tick es número (1-12), convertirlo a abreviatura
       if (typeof tick === 'number') {
           return this.translateMonthByNumber(tick);
       }
-      // Si es texto en inglés, traducirlo
-      const englishToShort: {[key: string]: string} = {
-          'January': 'Ene', 'February': 'Feb', 'March': 'Mar',
-          'April': 'Abr', 'May': 'May', 'June': 'Jun', 
-          'July': 'Jul', 'August': 'Ago', 'September': 'Sep',
-          'October': 'Oct', 'November': 'Nov', 'December': 'Dic'
-      };
-      return englishToShort[tick] || tick;
-  }
-
+      return this.translateMonthByNumber(parseInt(tick, 10));
+    }
+    
     return tick;
   };
   
