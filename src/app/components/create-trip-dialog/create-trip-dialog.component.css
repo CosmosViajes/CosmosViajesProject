@@ -9,4 +9,19 @@
 .space-x-4 > * + * {
     margin-left: 16px;
 }
-  
+
+h2 {
+    margin-top: 10%;
+}
+
+@media (max-width: 768px) {
+    h2 {
+        margin-top: 30%;
+    }
+}
+
+@media (max-width: 568px) {
+    h2 {
+        margin-top: 50%;
+    }
+}
