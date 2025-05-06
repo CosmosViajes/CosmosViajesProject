@@ -40,7 +40,7 @@ import { DatePipe } from '@angular/common';
         <div class="trip-meta">
           <div class="meta-item">
             <mat-icon class="meta-icon">flight_takeoff</mat-icon>
-            <div>
+            <div style="width: 70%;>
               <p class="meta-label">Fecha de salida</p>
               <input type="date" formControlName="departure" class="meta-value-input" />
             </div>
@@ -48,7 +48,7 @@ import { DatePipe } from '@angular/common';
 
           <div class="meta-item">
             <mat-icon class="meta-icon">flight_land</mat-icon>
-            <div>
+            <div style="width: 70%;>
               <p class="meta-label">Fecha de regreso</p>
               <input type="date" formControlName="duration" class="meta-value-input" />
             </div>
@@ -56,7 +56,7 @@ import { DatePipe } from '@angular/common';
 
           <div class="meta-item">
             <mat-icon class="meta-icon">group</mat-icon>
-            <div>
+            <div style="width: 70%;>
               <p class="meta-label">Plazas disponibles</p>
               <input type="number" formControlName="capacity" class="meta-value-input" />
             </div>
@@ -93,6 +93,7 @@ import { DatePipe } from '@angular/common';
       padding: 2rem;
       color: white;
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      max-height: 90vh;
     }
 
     .close-button {
@@ -214,7 +215,7 @@ import { DatePipe } from '@angular/common';
 
     .trip-meta {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
       gap: 1rem;
     }
 
@@ -287,7 +288,7 @@ import { DatePipe } from '@angular/common';
       gap: 1rem;
       margin-top: 1.5rem;
       justify-content: center;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
     }
 
     .edit-controls button {
