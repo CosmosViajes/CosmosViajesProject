@@ -58,8 +58,6 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; background-
 
 /* Para el contenedor interno del diálogo */
 .trip-details-container {
-  width: 85vw;
-  max-width: 900px;
   margin: 20px auto;
   position: relative;
   /* Mantén el resto de tus estilos actuales */
@@ -76,6 +74,7 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; background-
   max-width: 95vw !important;
   width: auto !important;
   pointer-events: auto !important;
+  margin: 40px;
 }
 
 /* En tu archivo de estilos global */

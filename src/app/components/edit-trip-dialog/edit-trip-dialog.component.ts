@@ -84,8 +84,6 @@ import { DatePipe } from '@angular/common';
   `,
   styles: [`
     .trip-details-container.edit-trip-container {
-      width: 85vw;
-      max-width: 900px;
       margin: 20px auto;
       position: relative;
       background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
