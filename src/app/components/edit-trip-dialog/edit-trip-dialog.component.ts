@@ -40,7 +40,7 @@ import { DatePipe } from '@angular/common';
         <div class="trip-meta">
           <div class="meta-item">
             <mat-icon class="meta-icon">flight_takeoff</mat-icon>
-            <div style="width: 70%;>
+            <div style="width: 70%;">
               <p class="meta-label">Fecha de salida</p>
               <input type="date" formControlName="departure" class="meta-value-input" />
             </div>
@@ -48,7 +48,7 @@ import { DatePipe } from '@angular/common';
 
           <div class="meta-item">
             <mat-icon class="meta-icon">flight_land</mat-icon>
-            <div style="width: 70%;>
+            <div style="width: 70%;">
               <p class="meta-label">Fecha de regreso</p>
               <input type="date" formControlName="duration" class="meta-value-input" />
             </div>
@@ -56,7 +56,7 @@ import { DatePipe } from '@angular/common';
 
           <div class="meta-item">
             <mat-icon class="meta-icon">group</mat-icon>
-            <div style="width: 70%;>
+            <div style="width: 70%;">
               <p class="meta-label">Plazas disponibles</p>
               <input type="number" formControlName="capacity" class="meta-value-input" />
             </div>
