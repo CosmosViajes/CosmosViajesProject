@@ -10,7 +10,7 @@
       <!-- Plantilla para usuarios autenticados -->
       <ng-template #loggedInTemplate>
         <img [src]="userPhotoUrl() || 'https://ui-avatars.com/api/?name=' + userName() + '&background=random&size=128'" class="avatar" (click)="toggleUserMenu()">
-        <div *ngIf="showUserMenu" class="user-menu">
+        <div *ngIf="showUserMenu" class="user-menu" (click)="resetUserMenuTimer()">
           <button mat-button *ngIf="authService.isAdmin()" (click)="openAdminPanelDialog()"><mat-icon>admin_panel_settings</mat-icon>Panel de administración</button>
           <button mat-button (click)="viewProfile()">VER PERFIL</button>
           <button *ngIf="authService.isProvider() || authService.isAdmin()" mat-button (click)="openCreateTripDialog()">CREAR VIAJE</button>

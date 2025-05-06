@@ -39,6 +39,8 @@ export class HeaderComponent implements OnInit {
   private isManuallyOpened = false;
   private forceKeepMenu = false;
   private lastScrollPosition = 0;
+  private lastUserMenuInteraction = 0;
+  private userMenuTimer: any;
 
   isLoggedIn = signal(false);
   userName = signal('');
@@ -250,32 +252,54 @@ export class HeaderComponent implements OnInit {
 
   toggleUserMenu() {
     this.showUserMenu = !this.showUserMenu;
-
     if (this.showUserMenu) {
-      this.startMenuUserTimer();
+      this.startUserMenuTimer();
+      this.lastUserMenuInteraction = Date.now();
+    } else {
+      this.clearUserMenuTimer();
     }
   }
-
+  
+  // Nuevo método para reiniciar el temporizador
+  resetUserMenuTimer() {
+    this.lastUserMenuInteraction = Date.now();
+    this.startUserMenuTimer();
+  }
+  
+  // Modificar el método startMenuUserTimer
+  private startUserMenuTimer() {
+    this.clearUserMenuTimer();
+    this.userMenuTimer = setInterval(() => {
+      const now = Date.now();
+      if (now - this.lastUserMenuInteraction >= 5000) {
+        this.closeUserMenu();
+      }
+    }, 1000);
+  }
+  
+  // Modificar el método closeUserMenu
   closeUserMenu(): void {
     this.showUserMenu = false;
-    clearTimeout(this.menuTimer);
+    this.clearUserMenuTimer();
   }
-
-  private startMenuUserTimer(): void {
-    clearTimeout(this.menuTimer);
-    this.menuTimer = setTimeout(() => {
-      this.closeUserMenu();
-    }, 5000);
+  
+  private clearUserMenuTimer() {
+    if (this.userMenuTimer) {
+      clearInterval(this.userMenuTimer);
+      this.userMenuTimer = null;
+    }
   }
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
-    const isMenuButton = target.closest('.menu-access');
-    const isInMenu = target.closest('.nav-container');
+    const isMenuButton = target.closest('.avatar');
+    const isInMenu = target.closest('.user-menu');
     
     if (!isMenuButton && !isInMenu) {
-      this.closeMenu();
+      this.closeUserMenu();
+    } else if (isInMenu) {
+      this.resetUserMenuTimer();
     }
   }
 

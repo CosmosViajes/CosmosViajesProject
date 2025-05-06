@@ -173,6 +173,7 @@ a.mat-button.active {
   color: #333; /* Color del texto de los botones */
   font-size: 0.9rem; /* Tamaño de fuente adecuado para los botones */
   cursor: pointer; /* Cambia a cursor de mano al pasar sobre los botones */
+  min-height: max-content;
 }
 
 .user-menu button:hover {
@@ -223,8 +224,7 @@ a.mat-button.active {
 @media (max-width: 768px) {
 
   .user-menu {
-    left: auto; /* Ajusta la posición automáticamente según el contenedor */
-    right: 15px; /* Asegura que esté visible en pantallas pequeñas */
+    left: 25px; /* Ajusta la posición automáticamente según el contenedor */
     transform: none; /* Elimina cualquier desplazamiento adicional */
     min-width: 150px; /* Reduce el ancho mínimo en pantallas pequeñas */
   }
