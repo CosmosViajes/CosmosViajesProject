@@ -64,7 +64,7 @@ import Swal from 'sweetalert2';
       <!-- Flecha para desplegar información y botón de reserva -->
       <div class="flex items-center mt-2">
         <!-- Botones para propietario -->
-        <div class="flex items-center justify-start w-[15%]">
+        <div class="flex items-center justify-start w-[40%]">
           <!-- Botón principal -->
           <button 
             *ngIf="isCompanyOwner"
@@ -75,7 +75,7 @@ import Swal from 'sweetalert2';
             Administrar
           </button>
         </div>
-        <div class="flex items-center justify-center w-[70%]">
+        <div class="flex items-center justify-center w-[20%]">
           <button
             (click)="toggleDetails()"
             class="flex items-center justify-center w-[32px] h-[32px] text-white hover:text-black transition-colors duration-300"
@@ -83,7 +83,7 @@ import Swal from 'sweetalert2';
             <mat-icon>{{ showDetails ? 'expand_less' : 'expand_more' }}</mat-icon>
           </button>
         </div>
-        <div class="flex items-center justify-end w-[15%]">
+        <div class="flex items-center justify-end w-[40%]">
           <button
             *ngIf="!isCompanyOwner && !hasReservation"
             (click)="reserveFlight($event)"
