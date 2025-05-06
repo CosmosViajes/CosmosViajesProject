@@ -390,7 +390,11 @@ import Swal from 'sweetalert2';
         background: #f8f9fa;
         padding: 1rem;
         border-radius: 8px;
+        display: flex;
+        justify-content: space-between;
         margin-top: 1rem;
+        align-content: center;
+        flex-direction: column;
       }
       .period-selector {
         display: flex;
@@ -408,12 +412,6 @@ import Swal from 'sweetalert2';
         padding: 1.5rem;
         border-radius: 12px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      }
-      .top-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 1rem;
       }
       .top-name {
         font-size: 1.2rem;
@@ -640,7 +638,7 @@ import Swal from 'sweetalert2';
       @media (max-width: 900px) {
         .admin-panel-modal {
           min-width: 95vw;
-          padding: 1.2rem;
+          padding: 5px;;
         }
         .stats-grid {
           grid-template-columns: 1fr;
