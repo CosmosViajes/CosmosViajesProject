@@ -667,6 +667,15 @@ export class ExperienciasComponent implements AfterViewInit, OnInit, OnDestroy {
           this.userLikes.delete(commentId);
           this.animateLike(commentId, 'red');
         }
+      },
+      error: (err) => {
+      // Mostrar modal o alerta
+        Swal.fire({
+          title: '¡Atención!',
+          text: 'Debes iniciar sesión o crear una cuenta para dar like.',
+          icon: 'info',
+          confirmButtonText: 'Ok'
+        });
       }
     });
   }
