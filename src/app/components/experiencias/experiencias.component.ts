@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, OnInit, OnDestroy, Inject } from '@angular/core';
+import { Component, AfterViewInit, OnInit, OnDestroy, Inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { switchMap, tap } from 'rxjs';
 import { MatTabsModule } from '@angular/material/tabs';
@@ -57,14 +57,14 @@ import Swal from 'sweetalert2';
                     <div class="comment-actions">
                       <span 
                         class="likes-count" 
-                        [ngClass]="{'liked': userLikes.has(comment.id)}">
+                        [ngClass]="{'liked': userLikes?.has(comment.id)}">
                         {{ comment.likes }}
                       </span>
+
                       <button mat-icon-button
                               [id]="'like-btn-' + comment.id"
                               (click)="likeComment(comment.id)"
-                              [ngClass]="{ 'liked': userLikes.has(comment.id) }"
-                              [attr.aria-pressed]="userLikes.has(comment.id)">
+                              [ngClass]="{ 'liked': userLikes?.has(comment.id) }">
                         <mat-icon>thumb_up</mat-icon>
                       </button>
                       <button mat-icon-button 
@@ -258,7 +258,11 @@ import Swal from 'sweetalert2';
       transition: color 0.3s;
     }
     .likes-count.liked {
-      color: #43a047; /* Verde si el usuario dio like */
+      color: #43a047 !important;
+      transition: color 0.3s ease;
+    }
+    .comment-actions button.liked mat-icon {
+      color: inherit !important; /* Mantener color verde en el icono */
     }
     .comment-actions button.liked {
       color: #43a047 !important; /* Verde */
@@ -477,6 +481,7 @@ export class ExperienciasComponent implements AfterViewInit, OnInit, OnDestroy {
   authStatus: any = null;
 
   constructor(
+    private cdr: ChangeDetectorRef,
     private authService: AuthService,
     private experienciasService: ExperienciasService,
     private dialog: MatDialog // Solo MatDialog aquí
@@ -557,10 +562,12 @@ export class ExperienciasComponent implements AfterViewInit, OnInit, OnDestroy {
   ngOnInit() {
     this.authStatus = this.authService.authStatus$?.getValue?.() || null;
     
-    // 1. Primero cargar experiencias
+    // Cargar primero experiencias, luego likes del usuario
     this.loadExperiencias().pipe(
-        // 2. Luego cargar likes del usuario
-        switchMap(() => this.loadUserLikes())
+      switchMap(() => this.loadUserLikes()),
+      tap(() => {
+        this.cdr.detectChanges();
+      })
     ).subscribe();
   }
 
@@ -580,9 +587,10 @@ export class ExperienciasComponent implements AfterViewInit, OnInit, OnDestroy {
 
   loadUserLikes() {
     return this.experienciasService.getUserLikes().pipe(
-        tap(likes => {
-            this.userLikes = new Set(likes);
-        })
+      tap(likes => {
+        const numericLikes = likes.map(id => Number(id)).filter(id => !isNaN(id));
+        this.userLikes = new Set(numericLikes);
+      })
     );
   }
 
