@@ -1,0 +1,100 @@
+<div class="max-w-lg mx-auto p-6 bg-white rounded-lg shadow-md">
+  <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">
+    Crear Nuevo Viaje Espacial
+  </h2>
+
+  <form [formGroup]="tripForm" (ngSubmit)="onSubmit()" class="space-y-4">
+    <!-- Nombre del viaje -->
+    <div>
+      <label class="block text-sm font-medium mb-1 text-gray-700">Nombre del viaje</label>
+      <input matInput formControlName="name" placeholder="Ejemplo: Viaje a Marte"
+             class="w-full px-3 py-2 border rounded-md focus:ring focus:ring-blue-300 focus:outline-none">
+      @if (tripForm.get('name')?.invalid) {
+        <p class="text-red-500 text-sm mt-1">El nombre es obligatorio</p>
+      }
+    </div>
+
+    <!-- Tipo de viaje -->
+    <div>
+      <label class="block text-sm font-medium mb-1 text-gray-700">Tipo de viaje</label>
+      <select formControlName="type"
+              class="w-full px-3 py-2 border rounded-md focus:ring focus:ring-blue-300 focus:outline-none">
+        <option value="" disabled selected>Selecciona un tipo</option>
+        <option value="Orbital">Orbital</option>
+        <option value="Suborbital">Suborbital</option>
+        <option value="Lunar">Lunar</option>
+        <option value="Espacial">Espacial</option>
+      </select>
+      @if (tripForm.get('type')?.invalid) {
+        <p class="text-red-500 text-sm mt-1">El tipo es obligatorio</p>
+      }
+    </div>
+
+    <!-- Fecha de salida -->
+    <div>
+      <label class="block text-sm font-medium mb-1 text-gray-700">Fecha de salida</label>
+      <input matInput formControlName="departure" type="date"
+             class="w-full px-3 py-2 border rounded-md focus:ring focus:ring-blue-300 focus:outline-none">
+      @if (tripForm.get('departure')?.invalid) {
+        <p class="text-red-500 text-sm mt-1">La fecha es obligatoria</p>
+      }
+    </div>
+
+    <!-- Fecha de regreso -->
+    <div>
+      <label class="block text-sm font-medium mb-1 text-gray-700">Fecha de regreso</label>
+      <input matInput formControlName="duration" type="date"
+             class="w-full px-3 py-2 border rounded-md focus:ring focus:ring-blue-300 focus:outline-none">
+      @if (tripForm.get('duration')?.invalid) {
+        <p class="text-red-500 text-sm mt-1">La fecha de regreso es obligatoria</p>
+      }
+    </div>
+
+    <!-- Capacidad y Precio -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Capacidad -->
+      <div>
+        <label class="block text-sm font-medium mb-1 text-gray-700">Capacidad (personas)</label>
+        <input matInput formControlName="capacity" type="number" min="1"
+               class="w-full px-3 py-2 border rounded-md focus:ring focus:ring-blue-300 focus:outline-none">
+        @if (tripForm.get('capacity')?.invalid) {
+          <p class="text-red-500 text-sm mt-1">Capacidad mínima de 1 persona</p>
+        }
+      </div>
+
+      <!-- Precio por persona -->
+      <div>
+        <label class="block text-sm font-medium mb-1 text-gray-700">Precio por persona (€)</label>
+        <input matInput formControlName="price" type="number" min="0"
+               class="w-full px-3 py-2 border rounded-md focus:ring focus:ring-blue-300 focus:outline-none">
+        @if (tripForm.get('price')?.invalid) {
+          <p class="text-red-500 text-sm mt-1">El precio debe ser mayor o igual a €0</p>
+        }
+      </div>
+    </div>
+
+    <!-- URL de la imagen -->
+    <div>
+      <label class="block text-sm font-medium mb-1 text-gray-700">Imagen del viaje</label>
+      <input type="file" (change)="onFileSelected($event)" #fileInput
+             class="w-full px-3 py-2 border rounded-md focus:ring focus:ring-blue-300 focus:outline-none">
+      <small class="text-gray-500">Formatos permitidos: JPG, PNG, WEBP (Máx. 2MB)</small>
+    </div>
+
+    <!-- Descripción -->
+    <div>
+      <label class="block text-sm font-medium mb-1 text-gray-700">Descripción</label>
+      <textarea matInput formControlName="description" rows="3"
+                class="w-full px-3 py-2 border rounded-md focus:ring focus:ring-blue-300 focus:outline-none"></textarea>
+      @if (tripForm.get('description')?.invalid) {
+        <p class="text-red-500 text-sm mt-1">La descripción es obligatoria</p>
+      }
+    </div>
+
+    <!-- Botones -->
+    <button type="submit" [disabled]="tripForm.invalid"
+            class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400 transition duration-200 ease-in-out">
+      Crear Viaje
+    </button>
+  </form>
+</div>

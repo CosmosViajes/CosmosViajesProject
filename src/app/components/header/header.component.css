@@ -1,0 +1,275 @@
+.header-root {
+  width: 100%;
+  position: fixed;
+  top: 0;
+  z-index: 1000;
+}
+
+.header-space {
+  height: 120px; /* Aumentado desde 112px */
+}
+
+.title-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Centra todos los elementos del título */
+  padding: 0.5rem 1rem;
+  background-color: #1e1e1e;
+  position: relative; /* Permite posicionar elementos dentro del contenedor */
+  z-index: 1100; /* Asegura que el título esté por encima de la animación */
+  height: 60px;
+}
+
+.auth-section {
+  position: absolute; /* Posiciona la sección de autenticación en la esquina izquierda */
+  left: 1rem;
+  display: flex;
+  align-items: center;
+}
+
+.logo {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.logo-main {
+  font-size: 1.5rem;
+  color: white;
+}
+
+.logo-plus {
+  font-size: 1.2rem;
+  color: #42a5f5;
+}
+
+.nav-container {
+  position: relative;
+  background: rgba(0, 0, 0, 0.95);
+  transform: translateY(-100%);
+  opacity: 0;
+  transition: all 0.3s ease; /* Animación suave al aparecer/desaparecer */
+  z-index: 900; /* Asegura que las animaciones estén debajo del título */
+}
+
+.nav-container.visible {
+  transform: translateY(0); /* Hace que el menú se desplace hacia abajo */
+  opacity: 1; /* Hace visible el menú */
+}
+
+.main-nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 12px 40px 12px 0;
+}
+
+.close-button {
+  position: absolute;
+  right: 10px;
+  color: rgba(255, 255, 255, 0.7) !important;
+  transition: color 0.2s ease;
+}
+
+.close-button:hover {
+  color: #42a5f5 !important; /* Cambia el color al pasar el cursor */
+}
+
+a.mat-button {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.9);
+  transition: color 0.2s ease; /* Animación al cambiar el color */
+}
+
+a.mat-button:hover,
+a.mat-button.active {
+  color: #42a5f5; /* Color distintivo para botones activos o en hover */
+}
+
+a.mat-button.active {
+  font-weight: 500; /* Resalta los botones activos */
+}
+
+/* Botón para abrir el menú cuando está oculto */
+.menu-access {
+  position: fixed;
+  top: 10px; /* Posiciona el botón en la parte superior */
+  right: 15px; /* Posiciona el botón en la esquina superior derecha */
+  display: flex; /* Asegura que los elementos internos se alineen correctamente */
+  justify-content: center; /* Centra el contenido horizontalmente */
+  align-items: center; /* Centra el contenido verticalmente */
+  width: 40px; /* Tamaño fijo del botón */
+  height: 40px; /* Tamaño fijo del botón */
+  border-radius: 50%; /* Hace que el botón sea circular */
+  background-color: rgba(66, 165, 245, 0.2); /* Fondo semitransparente */
+  color: white; /* Color del icono o texto dentro del botón */
+  z-index: 1100; /* Asegura que esté por encima de otros elementos */
+  cursor: pointer; /* Cambia el cursor a una mano cuando se pasa sobre el botón */
+  transition: background-color 0.3s ease, transform 0.3s ease; /* Animación suave al interactuar */
+}
+
+.menu-access:hover {
+  background-color: rgba(
+    66,
+    165,
+    245,
+    0.3
+  ); /* Cambia ligeramente el fondo al pasar el cursor */
+  transform: scale(
+    1.1
+  ); /* Hace que el botón se agrande ligeramente al pasar el cursor */
+}
+
+.menu-access mat-icon {
+  font-size: 24px; /* Tamaño del icono dentro del botón */
+}
+
+.header-space {
+  height: 112px; /* Espaciado para evitar superposición con contenido principal */
+  transition: height 0.3s ease; /* Animación suave al cambiar altura */
+}
+
+.header-space.small {
+  height: 60px; /* Reduce la altura cuando el encabezado es pequeño */
+}
+
+.auth-button {
+  font-size: 0.8rem !important; /* Tamaño del texto en botones de autenticación */
+  padding: 0 10px !important; /* Espaciado interno de los botones */
+}
+
+.avatar {
+  width: 36px; /* Tamaño del avatar del usuario autenticado */
+  height: 36px;
+  border-radius: 50%; /* Hace que el avatar sea circular */
+  object-fit: cover; /* Ajusta la imagen sin deformarla */
+  cursor: pointer; /* Cambia a cursor de mano al pasar sobre el avatar */
+  border: 2px solid #42a5f5; /* Borde distintivo alrededor del avatar */
+}
+
+.user-menu {
+  position: absolute; /* Posiciona el menú relativo al contenedor */
+  top: 60px; /* Desplaza el menú hacia abajo desde el avatar */
+  left: 0; /* Alinea el menú al borde izquierdo del contenedor */
+  transform: translateX(
+    -10px
+  ); /* Ajusta ligeramente la posición para evitar cortes */
+  background: white; /* Fondo blanco para el menú */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Sombra suave para dar profundidad */
+  border-radius: 8px; /* Bordes redondeados para un diseño moderno */
+  z-index: 1003; /* Asegura que esté por encima de otros elementos */
+  padding: 10px; /* Espaciado interno para los elementos dentro del menú */
+  min-width: 180px; /* Ancho mínimo para el menú */
+}
+
+.user-menu button {
+  display: block; /* Hace que los botones ocupen todo el ancho del menú */
+  width: 100%; /* Asegura que los botones sean del mismo tamaño que el menú */
+  text-align: left; /* Alinea el texto de los botones a la izquierda */
+  padding: 8px 12px; /* Espaciado interno de los botones */
+  background: none; /* Elimina el fondo predeterminado de los botones */
+  border: none; /* Elimina los bordes predeterminados de los botones */
+  color: #333; /* Color del texto de los botones */
+  font-size: 0.9rem; /* Tamaño de fuente adecuado para los botones */
+  cursor: pointer; /* Cambia a cursor de mano al pasar sobre los botones */
+  min-height: max-content;
+}
+
+.user-menu button:hover {
+  background-color: rgba(
+    66,
+    165,
+    245,
+    0.1
+  ); /* Fondo semitransparente al pasar el cursor */
+  color: #42a5f5; /* Cambia el color del texto al pasar el cursor */
+}
+
+.cart-menu {
+  margin-top: 10px;
+  padding: 1rem; /* Espaciado interno para todo el menú */
+  max-height: 300px; /* Limita la altura máxima del menú */
+  overflow-y: auto; /* Agrega scroll si las reservas exceden la altura máxima */
+  border: 1px solid #ddd; /* Borde para separar visualmente el menú */
+  border-radius: 8px; /* Bordes redondeados para un diseño moderno */
+}
+
+.cart-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.reservation-item {
+  cursor: pointer; /* Make it clear it's clickable */
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.reservation-item:last-child {
+  border-bottom: none;
+}
+
+.reservation-item:hover {
+  background-color: #f9f9f9;
+}
+
+.no-reservations {
+  font-size: 1rem;
+  color: gray;
+  text-align: center; /* Centra el texto dentro del menú */
+}
+
+@media (max-width: 768px) {
+
+  .user-menu {
+    left: 25px; /* Ajusta la posición automáticamente según el contenedor */
+    transform: none; /* Elimina cualquier desplazamiento adicional */
+    min-width: 150px; /* Reduce el ancho mínimo en pantallas pequeñas */
+  }
+
+  a.mat-button {
+    width: 100%;
+    padding: 0.75rem 0;
+  }
+
+  .auth-section {
+    left: -1rem;
+    position: absolute;
+    right: 15px;
+    flex-wrap: wrap; /* Permite que los elementos se ajusten en varias líneas */
+    flex-direction: column !important; /* Apila verticalmente */
+    top: auto !important;
+    width: 150px;
+  }
+
+  .auth-button {
+    width: 100% !important; /* Ocupa todo el ancho del contenedor */
+    margin: 0 !important; /* Elimina márgenes horizontales */
+    justify-content: center; /* Centra el texto en los botones */
+    height: 20px;
+  }
+
+  .logo {
+    margin: auto; /* Centra el logo incluso en pantallas pequeñas */
+  }
+}
+
+.custom-dialog-container .mat-dialog-container {
+  padding: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f5f5f5;
+}
+
+.admin-panel-header {
+  background: #1a237e;
+  color: white;
+  padding: 1rem;
+}
+
+.admin-tabs {
+  min-width: 800px;
+  min-height: 500px;
+}

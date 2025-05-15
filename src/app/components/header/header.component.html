@@ -1,0 +1,66 @@
+<div class="header-root">
+  <div class="title-bar">
+    <!-- Sección de autenticación alineada a la izquierda -->
+    <div class="auth-section">
+      <ng-container *ngIf="!isLoggedIn(); else loggedInTemplate">
+        <button mat-button class="auth-button" (click)="openLoginDialog()">INICIAR SESIÓN</button>
+        <button mat-button class="auth-button" (click)="openRegisterDialog()">REGISTRO</button>
+      </ng-container>
+
+      <!-- Plantilla para usuarios autenticados -->
+      <ng-template #loggedInTemplate>
+        <img [src]="userPhotoUrl() || 'https://ui-avatars.com/api/?name=' + userName() + '&background=random&size=128'" class="avatar" (click)="toggleUserMenu()">
+        <div *ngIf="showUserMenu" class="user-menu" (click)="resetUserMenuTimer()">
+          <button mat-button *ngIf="authService.isAdmin()" (click)="openAdminPanelDialog()"><mat-icon>admin_panel_settings</mat-icon>Panel de administración</button>
+          <button mat-button (click)="viewProfile()">VER PERFIL</button>
+          <button *ngIf="authService.isProvider() || authService.isAdmin()" mat-button (click)="openCreateTripDialog()">CREAR VIAJE</button>
+          <button mat-button routerLink="/payments-history"><mat-icon>receipt_long</mat-icon>Mis Pagos</button>
+          <button mat-button (click)="toggleCartMenu()">MIS RESERVAS</button>
+          <div *ngIf="showCartMenu" class="cart-menu">
+            <h3 class="cart-title">Mis Reservas</h3>
+            <div *ngFor="let reservedTrip of reservedTrips" class="reservation-item" (click)="viewTripDetails(reservedTrip.trip)" style="cursor: pointer;">
+              <span>{{ reservedTrip.trip.name }} ({{ reservedTrip.count }} reservas)</span>
+            </div>
+            <p *ngIf="reservedTrips.length === 0" class="no-reservations">No tienes reservas activas.</p>
+            <a routerLink="/cart" class="cart-link">
+              <mat-icon>shopping_cart</mat-icon>
+              Ver Cesta
+            </a>
+          </div>
+
+          <button mat-button (click)="logout()">CERRAR SESIÓN</button>
+        </div>
+      </ng-template>
+    </div>
+
+    <!-- Nombre de la web centrado -->
+    <h1 class="logo">
+      <span class="logo-main">COSMOVIAJES</span>
+      <span class="logo-plus">+</span>
+    </h1>
+
+    <!-- Espaciador para mantener el logo centrado -->
+    <div class="spacer"></div>
+  </div>
+
+  <!-- Contenedor de navegación -->
+  <div class="nav-container" [class.visible]="shouldShowMenu">
+    <nav class="main-nav">
+      <a mat-button routerLink="/" routerLinkActive="active" (click)="resetTimer()">EXPLORAR</a>
+      <a mat-button routerLink="/experiencias" routerLinkActive="active" (click)="resetTimer()">EXPERIENCIAS</a>
+      <a mat-button routerLink="/empresas" routerLinkActive="active" (click)="resetTimer()">EMPRESAS</a>
+      <button mat-icon-button class="close-button" (click)="closeMenu()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Botón de menú alineado a la izquierda -->
+  <ng-container *ngIf="!shouldShowMenu">
+    <button class="menu-access rigth-align" mat-icon-button (click)="openMenuTemporarily()">
+      <mat-icon>menu</mat-icon>
+    </button>
+  </ng-container>
+</div>
+
+<div class="header-space" [class.small]="!shouldShowMenu"></div>
