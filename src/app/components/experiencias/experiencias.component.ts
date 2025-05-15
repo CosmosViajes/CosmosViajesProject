@@ -97,7 +97,6 @@ import Swal from 'sweetalert2';
                   </div>
                 </mat-card>
               }
-              <!-- SOLO mostrar el botón si el usuario está autenticado -->
               <div 
                 class="add-image-card"
                 *ngIf="authStatus?.isAuthenticated"
@@ -435,7 +434,8 @@ import Swal from 'sweetalert2';
     
     .delete-btn {
       position: absolute;
-      right: 12px;
+      top: 3px;
+      right: 3px;
       width: 40px;
       height: 40px;
       display: flex;
