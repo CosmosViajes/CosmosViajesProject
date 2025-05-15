@@ -1,5 +1,6 @@
 import { Component, AfterViewInit, OnInit, OnDestroy, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { switchMap, tap } from 'rxjs';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -554,28 +555,35 @@ export class ExperienciasComponent implements AfterViewInit, OnInit, OnDestroy {
   }  
 
   ngOnInit() {
-    this.loadExperiencias().add(() => {
-      this.loadUserLikes();
-    });
     this.authStatus = this.authService.authStatus$?.getValue?.() || null;
+    
+    // 1. Primero cargar experiencias
+    this.loadExperiencias().pipe(
+        // 2. Luego cargar likes del usuario
+        switchMap(() => this.loadUserLikes())
+    ).subscribe();
   }
 
   loadExperiencias() {
-    return this.experienciasService.getExperiencias().subscribe(data => {
-      this.comments = data.filter((exp: any) => !exp.image);
-      this.galleryImages = data.filter((exp: any) => exp.image).map((img: any) => ({
-        id: img.id,
-        url: img.image,
-        description: img.description,
-        user_id: img.user_id
-      }));
-    });
-  }  
+    return this.experienciasService.getExperiencias().pipe(
+        tap(data => {
+            this.comments = data.filter((exp: any) => !exp.image);
+            this.galleryImages = data.filter((exp: any) => exp.image).map((img: any) => ({
+                id: img.id,
+                url: img.image,
+                description: img.description,
+                user_id: img.user_id
+            }));
+        })
+    );
+  }
 
   loadUserLikes() {
-    this.experienciasService.getUserLikes().subscribe(likes => {
-      this.userLikes = new Set(likes);
-    });
+    return this.experienciasService.getUserLikes().pipe(
+        tap(likes => {
+            this.userLikes = new Set(likes);
+        })
+    );
   }
 
   addComment() {
