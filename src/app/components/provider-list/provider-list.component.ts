@@ -5,7 +5,6 @@ import { FlightListModalComponent } from '../flight-list-modal/flight-list-modal
 @Component({
   selector: 'app-provider-list',
   templateUrl: './provider-list.component.html',
-  styleUrl: './provider-list.component.css',
   imports: [
     FlightListModalComponent
   ]
