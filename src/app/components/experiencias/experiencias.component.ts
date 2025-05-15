@@ -54,7 +54,11 @@ import Swal from 'sweetalert2';
                     </div>
                     <p class="comment-text">{{ comment.text }}</p>
                     <div class="comment-actions">
-                      <span class="likes-count">{{ comment.likes }}</span>
+                      <span 
+                        class="likes-count" 
+                        [ngClass]="{'liked': userLikes.has(comment.id)}">
+                        {{ comment.likes }}
+                      </span>
                       <button mat-icon-button
                               [id]="'like-btn-' + comment.id"
                               (click)="likeComment(comment.id)"
@@ -68,7 +72,9 @@ import Swal from 'sweetalert2';
                               class="delete-btn">
                         <mat-icon>delete</mat-icon>
                       </button>
+                      <span hidden>{{ comment.user_id }}</span>
                     </div>
+
                   </mat-card>
                 }
               </div>
@@ -239,18 +245,20 @@ import Swal from 'sweetalert2';
         }
       }
     }
-
     .likes-count {
       display: inline-block;
       min-width: 2ch;
       text-align: right;
       font-size: 1.1em;
-      color: #43a047;
+      color: #aaa;
       font-weight: 600;
       margin-right: 4px;
       margin-left: 2px;
+      transition: color 0.3s;
     }
-
+    .likes-count.liked {
+      color: #43a047; /* Verde si el usuario dio like */
+    }
     .comment-actions button.liked {
       color: #43a047 !important; /* Verde */
       background: rgba(67, 160, 71, 0.15);
@@ -546,12 +554,14 @@ export class ExperienciasComponent implements AfterViewInit, OnInit, OnDestroy {
   }  
 
   ngOnInit() {
-    this.loadExperiencias();
+    this.loadExperiencias().add(() => {
+      this.loadUserLikes();
+    });
     this.authStatus = this.authService.authStatus$?.getValue?.() || null;
   }
 
   loadExperiencias() {
-    this.experienciasService.getExperiencias().subscribe(data => {
+    return this.experienciasService.getExperiencias().subscribe(data => {
       this.comments = data.filter((exp: any) => !exp.image);
       this.galleryImages = data.filter((exp: any) => exp.image).map((img: any) => ({
         id: img.id,
@@ -560,7 +570,6 @@ export class ExperienciasComponent implements AfterViewInit, OnInit, OnDestroy {
         user_id: img.user_id
       }));
     });
-    this.loadUserLikes();
   }  
 
   loadUserLikes() {
