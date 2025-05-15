@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { AuthService } from './auth.service';
 
 @Injectable({ providedIn: 'root' })
@@ -45,7 +45,16 @@ export class ExperienciasService {
   }
   
   getUserLikes(): Observable<number[]> {
-    return this.http.get<number[]>(`${this.apiUrl}experiencias/user-likes`);
+    // Obtener ID del usuario desde el servicio de autenticación
+    const userId = this.authService.getCurrentUserId();
+    
+    if (!userId) {
+      return of([]);
+    }
+
+    return this.http.get<number[]>(`${this.apiUrl}experiencias/user-likes`, {
+      params: { user_id: userId.toString() }
+    });
   }
 
   deleteExperiencia(id: number): Observable<any> {

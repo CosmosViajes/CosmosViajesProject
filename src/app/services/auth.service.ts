@@ -292,6 +292,10 @@ export class AuthService {
       description: 'Solicitud de cambio de rol'
     });
   }
+
+  getCurrentUserId(): number | null {
+    return this.authStatus$.value?.userData?.id || null;
+  }
   
   updateUserRole(userId: number, newRole: string): Observable<any> {
     return this.http.put(`${this.apiUrl}/users/${userId}/role`, { role: newRole });
