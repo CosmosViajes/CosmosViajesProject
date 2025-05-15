@@ -61,9 +61,6 @@ import Swal from 'sweetalert2';
                               [attr.aria-pressed]="userLikes.has(comment.id)">
                         <mat-icon>thumb_up</mat-icon> {{ comment.likes }}
                       </button>
-                      <button mat-icon-button>
-                        <mat-icon>comment</mat-icon>
-                      </button>
                       <button mat-icon-button 
                               *ngIf="isCurrentUserComment(comment)"
                               (click)="deleteComment(comment.id)"
