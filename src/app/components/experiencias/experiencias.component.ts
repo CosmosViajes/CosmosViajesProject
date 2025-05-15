@@ -54,12 +54,13 @@ import Swal from 'sweetalert2';
                     </div>
                     <p class="comment-text">{{ comment.text }}</p>
                     <div class="comment-actions">
+                      <span class="likes-count">{{ comment.likes }}</span>
                       <button mat-icon-button
                               [id]="'like-btn-' + comment.id"
                               (click)="likeComment(comment.id)"
                               [ngClass]="{ 'liked': userLikes.has(comment.id) }"
                               [attr.aria-pressed]="userLikes.has(comment.id)">
-                        <mat-icon>thumb_up</mat-icon> {{ comment.likes }}
+                        <mat-icon>thumb_up</mat-icon>
                       </button>
                       <button mat-icon-button 
                               *ngIf="isCurrentUserComment(comment)"
@@ -67,9 +68,6 @@ import Swal from 'sweetalert2';
                               class="delete-btn">
                         <mat-icon>delete</mat-icon>
                       </button>
-
-                      <!-- Muestra el ID real del usuario -->
-                      <span hidden>{{ comment.user_id }}</span>
                     </div>
                   </mat-card>
                 }
@@ -224,6 +222,7 @@ import Swal from 'sweetalert2';
       .comment-actions {
         margin-top: 1rem;
         display: flex;
+        align-items: center;
         
         button {
           margin-right: 1rem;
@@ -239,6 +238,17 @@ import Swal from 'sweetalert2';
           }
         }
       }
+    }
+
+    .likes-count {
+      display: inline-block;
+      min-width: 2ch;
+      text-align: right;
+      font-size: 1.1em;
+      color: #43a047;
+      font-weight: 600;
+      margin-right: 4px;
+      margin-left: 2px;
     }
 
     .comment-actions button.liked {
