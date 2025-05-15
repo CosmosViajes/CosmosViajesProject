@@ -240,7 +240,6 @@ import Swal from 'sweetalert2';
           }
           
           mat-icon {
-            margin-right: 5px;
             font-size: 20px;
           }
         }
@@ -436,7 +435,6 @@ import Swal from 'sweetalert2';
     
     .delete-btn {
       position: absolute;
-      top: 12px;
       right: 12px;
       width: 40px;
       height: 40px;
