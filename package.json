@@ -22,6 +22,8 @@
     "@angular/router": "19.2.9",
     "@auth0/angular-jwt": "5.2.0",
     "@swimlane/ngx-charts": "20.1.0",
+    "firebase": "^11.6.1",
+    "@angular/fire": "^7.6.1",
     "rxjs": "7.8.0",
     "sweetalert2": "11.17.2",
     "tslib": "2.3.0",
