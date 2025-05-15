@@ -588,7 +588,9 @@ export class ExperienciasComponent implements AfterViewInit, OnInit, OnDestroy {
   loadUserLikes() {
     return this.experienciasService.getUserLikes().pipe(
       tap(likes => {
-        const numericLikes = likes.map(id => Number(id)).filter(id => !isNaN(id));
+        const numericLikes = likes
+          .map((id: string | number) => Number(id))
+          .filter((id: number) => !isNaN(id));
         this.userLikes = new Set(numericLikes);
       })
     );
@@ -653,7 +655,7 @@ export class ExperienciasComponent implements AfterViewInit, OnInit, OnDestroy {
     const authStatus = this.authService.authStatus$.getValue();
     const userId = authStatus?.userData?.id || 0;
     const alreadyLiked = this.userLikes.has(commentId);
-    this.experienciasService.toggleLike(commentId, userId).subscribe({
+    this.experienciasService.toggleLike(commentId).subscribe({
       next: (res) => {
         // Actualiza likes en el comentario
         const comment = this.comments.find(c => c.id === commentId);

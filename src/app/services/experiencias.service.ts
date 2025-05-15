@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { AuthService } from './auth.service';
 
 @Injectable({ providedIn: 'root' })
@@ -40,19 +40,21 @@ export class ExperienciasService {
     return this.http.delete(`${this.apiUrl}experiencias/image/${id}/delete`, { headers });
   }  
 
-  toggleLike(experienciaId: number, userId: number): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}experiencias/${experienciaId}/like/${userId}`, {});
-  }
-  
-  getUserLikes(): Observable<number[]> {
-    // Obtener ID del usuario desde el servicio de autenticación
+  toggleLike(experienciaId: number): Observable<any> {
     const userId = this.authService.getCurrentUserId();
-    
-    if (!userId) {
+    // Comprobar si el usuario está autenticado (id válido)
+    if (!Number.isInteger(userId) || userId === null || userId === undefined) {
+      return throwError(() => new Error('Debes iniciar sesión o crear una cuenta para dar like.'));
+    }
+    return this.http.post(`${this.apiUrl}experiencias/${experienciaId}/like/${userId}`, {});
+  }
+
+  getUserLikes(): Observable<any> {
+    const userId = this.authService.getCurrentUserId();
+    if (!Number.isInteger(userId) || userId === null || userId === undefined) {
       return of([]);
     }
-
-    return this.http.get<number[]>(`${this.apiUrl}experiencias/user-likes`, {
+    return this.http.get(`${this.apiUrl}experiencias/user-likes`, {
       params: { user_id: userId.toString() }
     });
   }
