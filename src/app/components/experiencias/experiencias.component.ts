@@ -547,7 +547,6 @@ export class ExperienciasComponent implements AfterViewInit, OnInit, OnDestroy {
 
   ngOnInit() {
     this.loadExperiencias();
-    this.loadUserLikes();
     this.authStatus = this.authService.authStatus$?.getValue?.() || null;
   }
 
@@ -561,6 +560,7 @@ export class ExperienciasComponent implements AfterViewInit, OnInit, OnDestroy {
         user_id: img.user_id
       }));
     });
+    this.loadUserLikes();
   }  
 
   loadUserLikes() {
