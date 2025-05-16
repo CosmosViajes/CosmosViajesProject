@@ -10,8 +10,7 @@ import { PaymentsHistoryComponent } from './components/payments-history/payments
 export const routes: Routes = [
   { 
     path: '', 
-    component: FlightsListComponent,
-    title: 'CosmoViajes+'
+    component: FlightsListComponent
   },
   {
     path: 'login',
