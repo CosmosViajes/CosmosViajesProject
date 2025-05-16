@@ -11,35 +11,30 @@ export const routes: Routes = [
   { 
     path: '', 
     component: FlightsListComponent,
-    title: 'Lista de vuelos'
+    title: 'CosmoViajes+'
   },
   {
     path: 'login',
-    component: LoginDialogComponent,
-    title: 'Iniciar sesión'
+    component: LoginDialogComponent
   },
   {
     path: 'payments-history',
-    component: PaymentsHistoryComponent ,
-    title: 'Pagos'
+    component: PaymentsHistoryComponent
   },
   {
     path: 'register',
-    component: RegisterDialogComponent,
-    title: 'Registrarse'
+    component: RegisterDialogComponent
   },
   {
     path: 'cart',
-    component: CartComponent,
-    title: 'Carrito'
+    component: CartComponent
   },
   {
     path: 'empresas',
-    component: ProviderListComponent,
-    title: 'Empresas'
+    component: ProviderListComponent
   },
   { 
     path: 'experiencias',
-    component: ExperienciasComponent 
+    component: ExperienciasComponent
   }
 ];
