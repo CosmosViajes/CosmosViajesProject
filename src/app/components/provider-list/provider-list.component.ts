@@ -11,18 +11,19 @@ import { FlightListModalComponent } from '../flight-list-modal/flight-list-modal
   ]
 })
 export class ProviderListComponent {
-  providers: any[] = [];
-  loading = true;
+  providers: any[] = []; // Aquí vamos a guardar la lista de proveedores (empresas que ofrecen viajes)
+  loading = true; // Esto es true mientras estamos cargando los datos
 
   constructor(private providerService: ProviderService) {}
 
+  // Cuando se abre la página, pedimos la lista de proveedores al servidor
   ngOnInit() {
     this.providerService.getProviders().subscribe({
       next: (data) => {
-        this.providers = data;
-        this.loading = false;
+        this.providers = data; // Guardamos la lista de proveedores
+        this.loading = false;  // Ya hemos terminado de cargar
       },
-      error: () => this.loading = false
+      error: () => this.loading = false // Si hay error, dejamos de cargar
     });
   }
 }

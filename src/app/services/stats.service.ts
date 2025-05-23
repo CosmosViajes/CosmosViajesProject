@@ -16,7 +16,6 @@ export class StatsService {
   getAdvancedStats(params: any): Observable<any> {
     let httpParams = new HttpParams().set('period', params.period);
   
-    // Convertir a ISO string solo si el valor es Date
     if (params.date instanceof Date) {
       httpParams = httpParams.set('date', params.date.toISOString());
     }

@@ -218,34 +218,36 @@ nav.menu {
 `],
 })
 export class FlightsListComponent implements OnInit, OnDestroy {
+  // Aquí guardamos datos para dibujar estrellas de fondo (es solo decoración)
   starsArray: { top: string; left: string; opacity: number; transition: boolean }[] = [];
 
-  showNoResults = false;
-  searchTimer: any;
-  searching = false;
+  showNoResults = false; // Si no hay resultados en la búsqueda, mostramos un mensaje
+  searchTimer: any; // Temporizador para la búsqueda
+  searching = false; // Si estamos buscando, esto es true
 
-  isLoading = true;
-  showRefresh = false;
-  lastUpdated?: Date;
-  isCheckingForUpdates = false;
+  isLoading = true; // Si estamos cargando los vuelos, esto es true
+  showRefresh = false; // Si hace falta mostrar el botón de refrescar
+  lastUpdated?: Date; // Fecha de la última actualización de la lista
+  isCheckingForUpdates = false; // Si estamos comprobando si hay vuelos nuevos
 
-  hasError = false;
-  flights: Flight[] = [];
-  filteredFlights: Flight[] = [];
+  hasError = false; // Si hay un error cargando los vuelos
+  flights: Flight[] = []; // Aquí guardamos todos los vuelos que nos llegan del servidor
+  filteredFlights: Flight[] = []; // Aquí guardamos los vuelos que coinciden con la búsqueda
 
-  private pollingSubscription?: Subscription;
+  private pollingSubscription?: Subscription; // Para actualizar la lista cada cierto tiempo
 
-  
-  initialLoad = true;
-  loadTimer: any;
-  currentSearch = '';
+  initialLoad = true; // Si es la primera vez que cargamos los vuelos
+  loadTimer: any; // Temporizador para la carga inicial
+  currentSearch = ''; // Lo que el usuario ha escrito en la barra de búsqueda
+
   constructor(private tripService: TripService) {}
 
-  private previousFlights: Flight[] = [];
-  showUpdateNotification = false;
-  private isComponentAlive = true;
-  private pollingInterval = 10000; // 10 segundos
+  private previousFlights: Flight[] = []; // Guardamos la lista anterior para ver si ha cambiado
+  showUpdateNotification = false; // Si hay vuelos nuevos o se han quitado, mostramos un aviso
+  private isComponentAlive = true; // Para saber si el componente sigue activo
+  private pollingInterval = 10000; // Cada cuánto tiempo (en milisegundos) miramos si hay vuelos nuevos (10 segundos)
 
+  // Dibuja muchas estrellas para el fondo
   generateStars(): void {
     const totalStars = 500;
     for (let i = 0; i < totalStars; i++) {
@@ -258,6 +260,7 @@ export class FlightsListComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Cambia algunas estrellas de sitio y brillo para que parezca que parpadean
   updateRandomStars(): void {
     const starsToUpdate = Math.floor(Math.random() * (50 - 10) + 10);
     for (let i = 0; i < starsToUpdate; i++) {
@@ -277,54 +280,59 @@ export class FlightsListComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Cuando se inicia el componente
   ngOnInit(): void {
-    this.startInitialLoad();
-    this.generateStars();
+    this.startInitialLoad(); // Cargamos los vuelos por primera vez
+    this.generateStars(); // Dibujamos las estrellas
 
+    // Cada poco tiempo, cambiamos algunas estrellas para que el fondo se vea animado
     setInterval(() => {
       this.updateRandomStars();
     }, Math.random() * (1000 - 500) + 500);
-
   }
 
+  // Carga inicial de los vuelos
   private startInitialLoad(): void {
     this.isLoading = true;
     this.hasError = false;
     
-    // Timer mínimo de 2 segundos para la carga inicial
+    // Siempre mostramos el "cargando" al menos 2 segundos para que no parpadee
     this.loadTimer = setTimeout(() => {
       this.isLoading = false;
     }, 2000);
 
-    this.loadFlights();
-    this.startPolling();
+    this.loadFlights(); // Pedimos los vuelos al servidor
+    this.startPolling(); // Empezamos a mirar si hay vuelos nuevos cada cierto tiempo
   }
 
+  // Si el usuario pulsa refrescar, volvemos a cargar los vuelos
   handleManualRefresh(): void {
     this.showUpdateNotification = false;
     this.loadFlights();
   }
 
-  // Modifica ngOnDestroy
+  // Cuando se destruye el componente, paramos los temporizadores y actualizaciones
   ngOnDestroy(): void {
     this.isComponentAlive = false;
     this.pollingSubscription?.unsubscribe();
     if (this.searchTimer) clearTimeout(this.searchTimer);
   }
 
+  // Pedimos la lista de vuelos al servidor
   loadFlights(): void {
     this.tripService.getFlights().subscribe({
       next: (data) => {
-        this.handleFlightData(data);
+        this.handleFlightData(data); // Si va bien, guardamos los vuelos
         this.clearLoadTimer();
       },
       error: (err) => {
-        this.handleLoadError(err);
+        this.handleLoadError(err); // Si hay error, lo mostramos
         this.clearLoadTimer();
       }
     });
   }
 
+  // Quitamos el temporizador de carga si ya no hace falta
   private clearLoadTimer(): void {
     if (this.loadTimer) {
       clearTimeout(this.loadTimer);
@@ -332,6 +340,7 @@ export class FlightsListComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Si hay error cargando los vuelos, lo mostramos y vaciamos las listas
   private handleLoadError(err: any): void {
     console.error('Error al cargar vuelos:', err);
     this.hasError = true;
@@ -340,6 +349,7 @@ export class FlightsListComponent implements OnInit, OnDestroy {
     this.initialLoad = false;
   }
 
+  // Cada 10 segundos, pedimos los vuelos al servidor para ver si hay cambios
   private startPolling(): void {
     this.pollingSubscription = timer(0, this.pollingInterval).pipe(
       takeWhile(() => this.isComponentAlive),
@@ -371,11 +381,12 @@ export class FlightsListComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Comprobamos si la lista de vuelos ha cambiado
   private haveFlightsChanged(newFlights: Flight[]): boolean {
     return JSON.stringify(newFlights) !== JSON.stringify(this.previousFlights);
   }
 
-  // Nuevo método para manejar nuevos vuelos detectados
+  // Si hay vuelos nuevos o se han quitado, mostramos un aviso durante 5 segundos
   private handleNewFlightsDetected(newFlights: Flight[]): void {
     const addedFlights = newFlights.filter(nf => 
       !this.previousFlights.some(pf => pf.id === nf.id)
@@ -393,8 +404,9 @@ export class FlightsListComponent implements OnInit, OnDestroy {
     this.previousFlights = [...newFlights];
   }
 
-  animationState = 'idle';
+  animationState = 'idle'; // Para animaciones de búsqueda
 
+  // Cuando recibimos los vuelos, los guardamos y filtramos según la búsqueda
   private handleFlightData(data: Flight[]): void {
     this.flights = data.map(flight => ({
       ...flight,
@@ -407,6 +419,7 @@ export class FlightsListComponent implements OnInit, OnDestroy {
     this.lastUpdated = new Date();
   }
 
+  // Filtra los vuelos según lo que el usuario ha escrito en la barra de búsqueda
   filterFlights(searchTerm: string): void {
     this.currentSearch = searchTerm.toLowerCase();
     this.searching = true;
@@ -414,6 +427,7 @@ export class FlightsListComponent implements OnInit, OnDestroy {
 
     if (this.searchTimer) clearTimeout(this.searchTimer);
 
+    // Espera 3 segundos antes de mostrar los resultados (como una búsqueda con retraso)
     this.searchTimer = setTimeout(() => {
       this.filteredFlights = this.flights.filter(flight => 
         (flight.name?.toLowerCase() || '').includes(this.currentSearch) ||
@@ -427,12 +441,14 @@ export class FlightsListComponent implements OnInit, OnDestroy {
     }, 3000);
   }
 
+  // Cuando termina una animación, comprobamos si seguimos buscando
   onAnimationDone() {
     if (this.searching) {
       this.animationState = 'searching';
     }
   }
 
+  // Comprueba si han cambiado los vuelos (añadidos o quitados)
   private checkForFlightChanges(newFlights: Flight[]): void {
     const currentIds = this.flights.map(f => f.id);
     const newIds = newFlights.map(f => f.id);

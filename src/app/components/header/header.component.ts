@@ -35,6 +35,7 @@ interface ReservedTrip {
   styleUrls: ['./header.component.css']
 })
 export class HeaderComponent implements OnInit {
+  // Variables internas para manejar temporizadores y el estado de los menús
   private menuTimer: any;
   private isManuallyOpened = false;
   private forceKeepMenu = false;
@@ -42,57 +43,67 @@ export class HeaderComponent implements OnInit {
   private lastUserMenuInteraction = 0;
   private userMenuTimer: any;
 
-  isLoggedIn = signal(false);
-  userName = signal('');
-  userPhotoUrl = signal('');
-  showUserMenu = false;
-  showCartMenu = false;
-  reservedTrips: ReservedTrip[] = [];
+  // Variables para mostrar si el usuario está logueado, su nombre, foto, menús y reservas
+  isLoggedIn = signal(false); // ¿El usuario está logueado?
+  userName = signal(''); // Nombre del usuario
+  userPhotoUrl = signal(''); // Foto del usuario
+  showUserMenu = false; // ¿Mostrar el menú del usuario?
+  showCartMenu = false; // ¿Mostrar el carrito?
+  reservedTrips: ReservedTrip[] = []; // Lista de viajes reservados
 
+  // Servicios y utilidades que usamos (autenticación, diálogos, etc.)
   private jwtHelper = inject(JwtHelperService);
   private dialog = inject(MatDialog);
   authService = inject(AuthService);
 
+  // Cuando se inicia el componente
   ngOnInit() {
-    this.checkContentHeight();
-    window.addEventListener('resize', this.checkContentHeight.bind(this));
+    this.checkContentHeight(); // Ajusta el menú según el alto de la página
+    window.addEventListener('resize', this.checkContentHeight.bind(this)); // Si cambias el tamaño de la ventana, vuelve a comprobar
 
+    // Cada vez que cambia el estado de autenticación (login/logout)
     this.authService.authStatus$.subscribe((status) => {
       this.isLoggedIn.set(status.isAuthenticated);
 
       if (status.isAuthenticated && status.userData) {
+        // Si está logueado, ponemos su nombre y foto
         this.userName.set(status.userData.name || 'Usuario');
-
         this.userPhotoUrl.set(this.getPhotoUrl(status.userData.photo, this.userName()));
 
-
+        // Si tenemos el id del usuario, cargamos sus reservas
         const userId = status.userData.id;
         if (userId !== undefined) {
           this.loadReservedTrips(userId);
         } else {
+          // Si no, intentamos actualizar el id
           console.warn('El ID del usuario aún no está disponible. Intentando actualizar...');
           this.authService.updateUserId();
         }
       } else {
+        // Si no está logueado, vaciamos los datos
         this.userName.set('');
         this.reservedTrips = [];
         this.userPhotoUrl.set('');
       }
     });
 
+    // Cada vez que cambian las reservas, las agrupamos para mostrarlas bien
     this.authService.reservedTrips$.subscribe((trips) => {
       this.groupReservedTrips(trips);
     });
   }
 
+  // Saca la foto del usuario o pone una de avatar si no hay
   private getPhotoUrl(photoData: any, userName: string): string {
     if (typeof photoData === 'string' && photoData.trim() !== '') {
       return photoData;
     } else {
+      // Si no hay foto, usamos un avatar con el nombre
       return `https://ui-avatars.com/api/?name=${encodeURIComponent(userName || 'Usuario')}&background=random&size=128`;
     }
   }
 
+  // Comprueba si hay un token válido en el navegador y, si lo hay, pone al usuario como logueado
   checkAuthStatus() {
     const token = localStorage.getItem('token');
     if (token && !this.jwtHelper.isTokenExpired(token)) {
@@ -103,6 +114,7 @@ export class HeaderComponent implements OnInit {
     }
   }
 
+  // Agrupa las reservas para que si tienes varias del mismo viaje, las cuente juntas
   private groupReservedTrips(trips: any[]) {
     const grouped: ReservedTrip[] = [];
     trips.forEach(trip => {
@@ -116,6 +128,7 @@ export class HeaderComponent implements OnInit {
     this.reservedTrips = grouped;
   }
 
+  // Comprueba el alto de la página para ver si hay que dejar el menú siempre visible
   private checkContentHeight(): void {
     setTimeout(() => {
       const contentHeight = Math.max(
@@ -129,6 +142,7 @@ export class HeaderComponent implements OnInit {
     }, 1);
   }
 
+  // Carga los viajes reservados del usuario
   loadReservedTrips(userId: number): void {
     this.authService.getReservedTrips(userId).subscribe({
       next: (trips) => {
@@ -140,10 +154,12 @@ export class HeaderComponent implements OnInit {
     });
   }
 
+  // Abre o cierra el menú del carrito
   toggleCartMenu() {
     this.showCartMenu = !this.showCartMenu;
   }
 
+  // Muestra los detalles de un viaje en una ventana emergente
   viewTripDetails(trip: any): void {
     this.dialog.open(TripDetailsComponent, {
       panelClass: 'custom-dialog-container',
@@ -158,6 +174,7 @@ export class HeaderComponent implements OnInit {
     });
   }
 
+  // Cancela una reserva si el usuario pulsa el botón correspondiente
   cancelReservation(reservationId: number): void {
     const userId = this.authService.authStatus$.getValue()?.userData?.id;
 
@@ -181,6 +198,7 @@ export class HeaderComponent implements OnInit {
     });
   }
 
+  // Abre la ventana de login
   openLoginDialog() {
     const dialogRef = this.dialog.open(LoginDialogComponent, {
       width: '60vw',
@@ -196,6 +214,7 @@ export class HeaderComponent implements OnInit {
     });
   }
 
+  // Abre la ventana de registro
   openRegisterDialog() {
     this.dialog.open(RegisterDialogComponent, {
       width: '60vw',
@@ -205,6 +224,7 @@ export class HeaderComponent implements OnInit {
     });
   }
 
+  // Abre la ventana para crear un viaje nuevo (si el usuario está logueado)
   openCreateTripDialog() {
     const authStatus = this.authService.authStatus$.getValue();
 
@@ -229,6 +249,7 @@ export class HeaderComponent implements OnInit {
     }
   }
 
+  // Abre la ventana para ver el perfil del usuario
   viewProfile() {
     const authStatus = this.authService.authStatus$.getValue();
 
@@ -250,6 +271,7 @@ export class HeaderComponent implements OnInit {
     });
   }
 
+  // Abre o cierra el menú del usuario
   toggleUserMenu() {
     this.showUserMenu = !this.showUserMenu;
     if (this.showUserMenu) {
@@ -260,13 +282,13 @@ export class HeaderComponent implements OnInit {
     }
   }
   
-  // Nuevo método para reiniciar el temporizador
+  // Reinicia el temporizador del menú del usuario
   resetUserMenuTimer() {
     this.lastUserMenuInteraction = Date.now();
     this.startUserMenuTimer();
   }
   
-  // Modificar el método startMenuUserTimer
+  // Empieza el temporizador que cierra el menú del usuario si pasa mucho tiempo sin tocarlo
   private startUserMenuTimer() {
     this.clearUserMenuTimer();
     this.userMenuTimer = setInterval(() => {
@@ -277,7 +299,7 @@ export class HeaderComponent implements OnInit {
     }, 1000);
   }
   
-  // Modificar el método closeUserMenu
+  // Cierra el menú del usuario y limpia el temporizador
   closeUserMenu(): void {
     this.showUserMenu = false;
     this.clearUserMenuTimer();
@@ -290,6 +312,7 @@ export class HeaderComponent implements OnInit {
     }
   }
 
+  // Si haces clic fuera del menú del usuario, lo cierra
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
@@ -303,7 +326,7 @@ export class HeaderComponent implements OnInit {
     }
   }
 
-
+  // Cierra sesión y borra los datos del usuario
   logout() {
     this.authService.logout();
     this.isLoggedIn.set(false);
@@ -313,6 +336,7 @@ export class HeaderComponent implements OnInit {
     this.userPhotoUrl.set('');
   }
 
+  // Si haces scroll, puede ocultar o mostrar el menú según cómo te muevas por la página
   @HostListener('window:scroll')
   onWindowScroll(): void {
     const currentScroll = window.pageYOffset;
@@ -328,24 +352,29 @@ export class HeaderComponent implements OnInit {
     this.lastScrollPosition = currentScroll;
   }
 
+  // Dice si el menú debe estar visible o no
   get shouldShowMenu(): boolean {
     return window.pageYOffset === 0 || this.isManuallyOpened || this.forceKeepMenu;
   }
 
+  // Abre el menú por un rato
   openMenuTemporarily(): void {
     this.isManuallyOpened = true;
     this.startMenuTimer();
   }
 
+  // Cierra el menú
   closeMenu(): void {
     this.isManuallyOpened = false;
     clearTimeout(this.menuTimer);
   }
 
+  // Reinicia el temporizador del menú
   resetTimer(): void {
     this.startMenuTimer();
   }
 
+  // Empieza el temporizador que cierra el menú si no haces nada en 5 segundos
   private startMenuTimer(): void {
     clearTimeout(this.menuTimer);
     if (window.pageYOffset > 0 && !this.forceKeepMenu) {
@@ -355,6 +384,7 @@ export class HeaderComponent implements OnInit {
     }
   }
 
+  // Abre el panel de administración
   openAdminPanelDialog() {
     this.dialog.open(AdminPanelDialogComponent, {
       width: '60vw',
@@ -363,5 +393,4 @@ export class HeaderComponent implements OnInit {
       autoFocus: false
     });
   }
-
 }

@@ -170,29 +170,34 @@ import Swal from 'sweetalert2';
     `],
 })
 export class FlightCardComponent implements OnInit, OnDestroy {
+  // Recibe información de un viaje espacial (flight) y avisa si se borra un viaje
   @Input() flight!: any;
   @Output() tripDeleted = new EventEmitter<number>();
 
+  // Aquí guardamos datos de usuario y otras cosas para saber si está logueado, si tiene reservas, etc.
   authStatus: any = null;
   private authSubscription!: Subscription;
   private reservedTripsSubscription!: Subscription;
   private destroy$ = new Subject<void>();
 
+  // Usamos servicios para saber si el usuario está logueado, para gestionar viajes y para mostrar ventanas emergentes
   private authService = inject(AuthService);
   private tripService = inject(TripService);
   private dialog = inject(MatDialog);
 
-  hasReservation = false;
-  isCompanyOwner = false;
-  numberOfReservations: number = 0;
-  reservationsCount: number = 0;
-  remainingSeats: number = 0;
+  hasReservation = false; // ¿El usuario tiene reservas en este viaje?
+  isCompanyOwner = false; // ¿El usuario es el dueño de la empresa que ofrece el viaje?
+  numberOfReservations: number = 0; // Cuántas reservas tiene el usuario en este viaje
+  reservationsCount: number = 0; // Total de reservas del usuario en este viaje
+  remainingSeats: number = 0; // Cuántos asientos quedan libres en el viaje
 
+  // Muestra un menú con opciones para editar o borrar el viaje
   showTripOptions(event: Event): void {
     event.stopPropagation();
   
     const iconStyle = `style="font-family: 'Material Icons'; font-size: 24px; vertical-align: middle;"`;
   
+    // Aquí sale una ventanita con los botones de editar y borrar
     Swal.fire({
       title: `Opciones para: <span class="text-indigo-600">${this.flight.name}</span>`,
       html: `
@@ -244,13 +249,14 @@ export class FlightCardComponent implements OnInit, OnDestroy {
       }
     });
   }  
-
+// Cuando se monta el componente, nos suscribimos a los cambios de usuario y reservas
   ngOnInit(): void {
     this.subscribeToAuthChanges();
     this.initializeReservationCheck();
     this.pollReservedTrips();
   }
 
+  // Cuando se destruye el componente, limpiamos todo para que no haya problemas de memoria
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
@@ -262,6 +268,7 @@ export class FlightCardComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Nos suscribimos para saber si el usuario inicia/cierra sesión y actualizamos datos
   private subscribeToAuthChanges(): void {
     this.authSubscription = this.authService.authStatus$
       .pipe(takeUntil(this.destroy$))
@@ -272,11 +279,13 @@ export class FlightCardComponent implements OnInit, OnDestroy {
       });
   }
 
+  // Comprobamos si el usuario es el dueño de la empresa que ofrece el viaje
   private checkCompanyOwnership(): void {
     this.isCompanyOwner = this.authStatus?.isAuthenticated &&
       this.authStatus?.userData?.id === this.flight?.company_id;
   }
 
+  // Al principio, miramos si el usuario tiene reservas en este viaje
   private initializeReservationCheck(): void {
     if (this.authStatus?.userData?.id) {
       this.authService.getReservedTrips(this.authStatus.userData.id)
@@ -287,6 +296,7 @@ export class FlightCardComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Cada 5 segundos, volvemos a comprobar las reservas para que todo esté actualizado
   private pollReservedTrips(): void {
     this.reservedTripsSubscription = interval(5000)
       .pipe(
@@ -304,6 +314,7 @@ export class FlightCardComponent implements OnInit, OnDestroy {
       });
   }
 
+  // Comprobamos si el usuario tiene reservas en este viaje y cuántas
   private checkReservation(reservedTrips: any[] = []): void {
     if (this.flight && reservedTrips) {
       const flightReservations = reservedTrips.filter(trip => trip.trip_id === this.flight.id);
@@ -315,6 +326,7 @@ export class FlightCardComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Cuando el usuario quiere reservar asientos
   reserveFlight(event: Event): void {
     event.stopPropagation();
 
@@ -354,16 +366,15 @@ export class FlightCardComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // ... (tu lógica de reserva original sigue aquí)
+    // Si está logueado, comprobamos cuántos asientos quedan y dejamos reservar
     const userId = this.authStatus.userData.id;
     const tripId = this.flight.id;
 
-    // 2. Verificación en tiempo real de disponibilidad
     this.tripService.getReservedSeats(tripId).subscribe({
       next: (response) => {
         const availableSeats = this.flight.capacity - response.reserved_seats;
 
-        // 3. Validación de disponibilidad antes de mostrar el diálogo
+        // Mostramos una ventana para que elija cuántos asientos reservar
         if (availableSeats <= 0) {
           Swal.fire('No disponible', 'No hay asientos disponibles', 'info');
           return;
@@ -395,7 +406,7 @@ export class FlightCardComponent implements OnInit, OnDestroy {
           if (result.isConfirmed) {
             const quantity = result.value;
 
-            // 4. Verificación final de disponibilidad
+            // Volvemos a comprobar que aún quedan asientos y reservamos
             this.tripService.getReservedSeats(tripId).subscribe({
               next: (latestResponse) => {
                 const latestAvailable = this.flight.capacity - latestResponse.reserved_seats;
@@ -416,8 +427,7 @@ export class FlightCardComponent implements OnInit, OnDestroy {
       error: (err) => this.handleReservationError(err)
     });
   }
-
-  // Métodos para abrir los diálogos de login y registro
+// Abre la ventana de login
   openLoginDialog() {
     this.dialog.open(LoginDialogComponent, {
       width: '60vw',
@@ -427,6 +437,7 @@ export class FlightCardComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Abre la ventana de registro
   openRegisterDialog() {
     this.dialog.open(RegisterDialogComponent, {
       width: '60vw',
@@ -436,11 +447,10 @@ export class FlightCardComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Hace la reserva de los asientos uno a uno
   private processReservations(userId: number, tripId: number, quantity: number): void {
     let successCount = 0;
     const reservationObservables = [];
-
-    // Crear array de observables para paralelizar (o mantener secuencial si es necesario)
     for (let i = 0; i < quantity; i++) {
       reservationObservables.push(
         this.tripService.addReservation({
@@ -451,7 +461,6 @@ export class FlightCardComponent implements OnInit, OnDestroy {
       );
     }
 
-    // Ejecutar reservas en paralelo (o usar forkJoin para esperar todas)
     reservationObservables.forEach((obs, index) => {
       obs.subscribe({
         next: (res) => {
@@ -467,18 +476,16 @@ export class FlightCardComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Cuando la reserva sale bien, actualizamos los datos y mostramos un mensaje de éxito
   private handleReservationSuccess(response: any, quantity: number): void {
     this.remainingSeats = response.remaining_seats;
     this.reservationsCount += quantity;
-
-    // Actualizar datos en tiempo real
     this.checkSeatAvailability();
     this.checkUserReservation();
-
-    // Mostrar confirmación
     this.showSuccessAlert(quantity);
   }
 
+  // Muestra una ventana diciendo que la reserva fue un éxito
   private showSuccessAlert(quantity: number): void {
     this.tripService.getReservedSeats(this.flight.id).subscribe({
       next: (response) => {
@@ -500,6 +507,7 @@ export class FlightCardComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Si hay error al reservar, mostramos un mensaje
   private handleReservationError(error: any): void {
     if (error.status === 422) {
       Swal.fire('Error', error.error.message, 'error');
@@ -508,12 +516,13 @@ export class FlightCardComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Mostrar u ocultar detalles del viaje
   showDetails = false;
-
   toggleDetails(): void {
     this.showDetails = !this.showDetails;
   }
 
+  // Borra el viaje si el usuario es el dueño
   deleteTrip(event: Event): void {
     event.stopPropagation();
 
@@ -535,12 +544,10 @@ export class FlightCardComponent implements OnInit, OnDestroy {
       if (result.isConfirmed) {
         this.tripService.deleteTrip(this.flight.id).subscribe({
           next: () => {
-            console.log(`Viaje "${this.flight.name}" eliminado exitosamente.`);
             Swal.fire('Eliminado', `El viaje "${this.flight.name}" ha sido eliminado.`, 'success');
             this.tripDeleted.emit(this.flight.id);
           },
           error: (err) => {
-            console.error('Error al eliminar viaje:', err);
             Swal.fire('Error', 'Hubo un problema al intentar eliminar el viaje.', 'error');
           },
         });
@@ -548,6 +555,7 @@ export class FlightCardComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Cancela reservas del usuario en este viaje
   cancelReservation(event: Event): void {
     event.stopPropagation();
 
@@ -558,11 +566,11 @@ export class FlightCardComponent implements OnInit, OnDestroy {
 
     const userId = this.authStatus.userData.id;
 
-    // Verificación adicional para evitar inconsistencia en los datos
+    // Busca las reservas del usuario para este viaje
     this.authService.getReservedTrips(userId).subscribe(reservedTrips => {
       const userReservationsForFlight = reservedTrips
         .filter(trip => trip.trip_id === this.flight.id)
-        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()); // Ordenar por fecha (más antiguas primero)
+        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
       const actualReservationsCount = userReservationsForFlight.length;
 
@@ -589,7 +597,6 @@ export class FlightCardComponent implements OnInit, OnDestroy {
         if (result.isConfirmed) {
           const cancelQuantity = result.value;
           let cancelledCount = 0;
-
           const reservationsToCancel = userReservationsForFlight.slice(0, cancelQuantity);
 
           reservationsToCancel.forEach(reservation => {
@@ -601,7 +608,6 @@ export class FlightCardComponent implements OnInit, OnDestroy {
                     'Cancelación Exitosa',
                     `Se cancelaron ${cancelQuantity} reserva${cancelQuantity > 1 ? 's' : ''}`
                   );
-                  // Actualizar todos los contadores
                   this.checkReservation();
                   this.checkUserReservation();
                   this.checkSeatAvailability();
@@ -619,6 +625,7 @@ export class FlightCardComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Comprueba cuántos asientos quedan libres en el viaje
   private checkSeatAvailability(): void {
     this.tripService.getReservedSeats(this.flight.id).subscribe({
       next: (response) => {
@@ -628,20 +635,18 @@ export class FlightCardComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Comprueba cuántas reservas tiene el usuario en este viaje
   private checkUserReservation(): void {
     const userId = this.authStatus?.userData?.id;
 
     if (!userId) return;
 
-    // Primero verifica los asientos totales del vuelo
     this.tripService.getReservedSeats(this.flight.id).subscribe({
       next: (seatsResponse) => {
         this.remainingSeats = this.flight.capacity - seatsResponse.reserved_seats;
 
-        // Luego obtiene las reservas del usuario
         this.authService.getReservedTrips(userId).subscribe({
           next: (reservations) => {
-            // Suma las cantidades de todas las reservas del usuario
             this.reservationsCount = reservations
               .filter((res: any) => res.trip_id === this.flight.id)
               .reduce((sum: number, res: any) => sum + res.quantity, 0);
@@ -655,6 +660,7 @@ export class FlightCardComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Muestra una ventana con detalles de la reserva y opciones para añadir o cancelar asientos
   showReservationDetails(event: Event): void {
     event.stopPropagation();
 
@@ -726,20 +732,24 @@ export class FlightCardComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Calcula el precio final (con descuento si es empresa)
   get finalPrice(): number {
     return this.authService.isCompany()
       ? this.flight.price * 0.85
       : this.flight.price;
   }
 
+  // Devuelve el precio original del viaje
   get originalPrice(): number {
     return this.flight.price;
   }
 
+  // ¿El usuario es una empresa?
   isBusinessAccount(): boolean {
     return this.authService.isCompany();
   }
 
+  // Abre la ventana para editar el viaje
   openEditTripDialog(event: Event): void {
     event.stopPropagation();
     const dialogRef = this.dialog.open(EditTripDialogComponent, {
@@ -751,9 +761,8 @@ export class FlightCardComponent implements OnInit, OnDestroy {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result === 'updated') {
-        // Aquí puedes emitir un evento o refrescar la lista de vuelos
-        // Por ejemplo:
-        this.tripService.deleteTrip(this.flight.id); // O mejor, refresca la lista de trips desde el padre
+        // Aquí podrías refrescar la lista de viajes o hacer otra acción
+        this.tripService.deleteTrip(this.flight.id); // O mejor, refresca la lista desde el padre
       }
     });
   }

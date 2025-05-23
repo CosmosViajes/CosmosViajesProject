@@ -171,27 +171,32 @@ h2 {
   `]
 })
 export class PaymentsHistoryComponent implements OnInit {
-  payments: any[] = [];
+  payments: any[] = []; // Aquí vamos a guardar la lista de pagos del usuario
 
   constructor(
-    private paymentService: PaymentService,
-    private authService: AuthService
+    private paymentService: PaymentService, // Servicio para pedir los pagos al servidor
+    private authService: AuthService // Servicio para saber quién es el usuario
   ) {}
 
+  // Cuando se abre la página, llamamos a la función para cargar los pagos
   ngOnInit() {
     this.loadPayments();
   }
 
+  // Esta función pide al servidor la lista de pagos del usuario
   loadPayments() {
+    // Cogemos la información del usuario que está conectado
     const authStatus = this.authService.authStatus$.getValue();
     const userId = authStatus?.userData?.id;
     
+    // Si tenemos el id del usuario, pedimos sus pagos
     if (userId) {
       this.paymentService.getUserPayments(userId).subscribe({
-        next: (data) => this.payments = data,
-        error: (err) => console.error('Error cargando pagos:', err)
+        next: (data) => this.payments = data, // Guardamos los pagos en la lista
+        error: (err) => console.error('Error cargando pagos:', err) // Si hay error, lo mostramos en la consola
       });
     } else {
+      // Si no hay usuario conectado, mostramos un mensaje de error
       console.error('Usuario no autenticado');
     }
   }  

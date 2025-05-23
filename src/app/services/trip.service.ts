@@ -12,12 +12,10 @@ export class TripService {
 
   constructor(private http: HttpClient) {}
 
-  // Crear un trip
   createTrip(tripData: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/trips`, tripData);
   }
 
-  // Obtener la lista de trips
   getFlights(): Observable<Flight[]> {
     return this.http.get<Flight[]>(`${this.apiUrl}/flights`);
   }
@@ -45,11 +43,9 @@ export class TripService {
   }
 
   updateTrip(tripId: number, updatedFields: any) {
-    // Solo envía los campos modificados
     return this.http.post(`${this.apiUrl}/trips/${tripId}/update`, updatedFields);
   }
 
-  // Comprar un trip
   purchaseTrip(tripId: number): Observable<any> {
     return this.http.post(`${this.apiUrl}/trips/${tripId}/purchase`, {});
   }

@@ -46,63 +46,69 @@ import { RegisterDialogComponent } from '../register-dialog/register-dialog.comp
   `,
 })
 export class LoginDialogComponent implements OnInit {
+  // Aquí guardamos el email y la contraseña que escribe el usuario
   credentials: { [key: string]: string } = {
     email: '',
     password: ''
   };
 
-  loading = signal(false);
-  error = signal('');
+  loading = signal(false); // Esto es true mientras intentamos iniciar sesión
+  error = signal(''); // Aquí guardamos el mensaje de error si algo sale mal
 
   constructor(
-    public authService: AuthService,
-    private router: Router,
-    private dialogRef: MatDialogRef<LoginDialogComponent>,
-    private dialog: MatDialog
+    public authService: AuthService, // Servicio para iniciar sesión
+    private router: Router, // Para movernos a otra página si hace falta
+    private dialogRef: MatDialogRef<LoginDialogComponent>, // Para cerrar la ventana de login
+    private dialog: MatDialog // Para abrir otras ventanas, como la de registro
   ) {}
 
+  // Cuando se abre la ventana de login
   ngOnInit() {
+    // Si venías de otra parte de la web y ya pusiste un email, lo rellenamos aquí
     const emailFromState = this.router.getCurrentNavigation()?.extras.state?.['email'];
     if (emailFromState) {
       this.credentials['email'] = emailFromState;
     }
   }
 
+  // Cuando pulsas el botón de iniciar sesión
   onSubmit() {
-    this.loading.set(true);
-    this.error.set('');
+    this.loading.set(true); // Ponemos el "cargando"
+    this.error.set(''); // Quitamos mensajes de error viejos
 
+    // Llamamos al servicio para intentar iniciar sesión con el email y la contraseña
     this.authService.login({
       email: this.credentials['email'],
       password: this.credentials['password']
     }).subscribe({
       next: () => {
+        // Si todo va bien, cerramos la ventana y vamos a la página principal
         this.dialogRef.close(true);
         this.router.navigate(['/']);
       },
       error: (err) => {
+        // Si hay error, mostramos un mensaje claro
         this.error.set(this.getErrorMessage(err));
         this.loading.set(false);
       },
       complete: () => {
-        this.loading.set(false);
+        this.loading.set(false); // Quitamos el "cargando" cuando termina
       }
     });
   }
 
-  /**
-   * Abre el diálogo de registro y cierra el diálogo actual.
-   */
+  // Si el usuario quiere registrarse, abrimos la ventana de registro y cerramos esta
   openRegister(): void {
-    this.dialogRef.close(); // Cierra el diálogo de inicio de sesión
+    this.dialogRef.close(); // Cerramos la ventana de login
     this.dialog.open(RegisterDialogComponent, {
-      width: '60vw', // Ajusta el ancho del diálogo (60% del ancho de la ventana)
-      height: 'auto', // Ajusta la altura automáticamente según el contenido
-      panelClass: 'custom-dialog-container', // Aplica una clase personalizada
-      backdropClass: 'custom-backdrop', // Clase personalizada para el fondo
+      width: '60vw', // Ancho de la ventana
+      height: 'auto', // Altura automática
+      panelClass: 'custom-dialog-container', // Clase personalizada para estilos
+      backdropClass: 'custom-backdrop', // Fondo personalizado
     });
   }
 
+  // Esta función pone un mensaje de error claro según lo que haya pasado
   private getErrorMessage(error: any): string {
     if (error.status === 401) {
       return 'Email o contraseña incorrectos';

@@ -658,38 +658,56 @@ import Swal from 'sweetalert2';
   ],
 })
 export class AdminPanelDialogComponent {
+  // Aquí guardamos los pagos pendientes y las solicitudes de usuarios
   payments: any[] = [];
   requests: any[] = [];
+
+  // Estas variables sirven para elegir si quieres ver los datos de un día, un mes o un año
   selectedPeriod: string = 'day';
   selectedDate: Date = new Date();
   selectedMonth: Date = new Date();
   selectedYear: number = new Date().getFullYear();
+
+  // Aquí se guardan los viajes y empresas más importantes según las reservas
   topTrips: any[] = [];
   topCompanies: any[] = [];
+
+  // Esto sirve para saber si las estadísticas están cargando
   loadingStats: boolean = false;
+
+  // Aquí guardamos cuántas reservas y compras se han hecho en el día
   dailyUserReservations: number | null = null;
   dailyCompanyPurchases: number | null = null;
+
+  // Listas para mostrar todos los viajes y empresas
   allTrips: any[] = [];
   allCompanies: any[] = [];
+
+  // Opciones para el gráfico (cómo se ve el dibujo de barras)
   barPadding: number = 15;
   yScaleMin: number = 0;
   yScaleMax: number = 5;
 
+  // Datos para mostrar reservas hechas por empresas
   companyReservationsData: any[] = [];
 
+  // Colores para los gráficos
   colorScheme: Color = {
     name: 'custom',
     selectable: true,
     domain: ['#5AA454', '#C7B42C', '#AAAAAA'],
   } as Color;
 
+  // Datos para los gráficos de viajes y empresas
   tripsData: any[] = [];
   companiesData: any[] = [];
 
+  // Esto saca solo las solicitudes que están pendientes de aprobar
   get pendingRequests() {
     return this.requests.filter((r) => r.status === 'pending');
   }
 
+  // Aquí se preparan los servicios que vamos a usar para cargar datos
   constructor(
     private paymentService: PaymentService,
     private requestService: RequestService,
@@ -697,19 +715,21 @@ export class AdminPanelDialogComponent {
     private authService: AuthService
   ) {}
 
+  // Cuando se abre el panel, cargamos los pagos, las solicitudes y las estadísticas
   ngOnInit() {
     this.loadPendingPayments();
     this.loadRequests();
     this.loadStats();
   }
 
+  // Si cambias el periodo (día, mes, año), recargamos las estadísticas
   onPeriodChange() {
     this.loadStats();
   }
 
+  // Cuando eliges un día en el calendario, lo guardamos y recargamos estadísticas
   onDaySelected(event: MatDatepickerInputEvent<Date>) {
     if (event.value) {
-        // Convertir a UTC manteniendo la fecha visual
         const utcDate = new Date(Date.UTC(
             event.value.getFullYear(),
             event.value.getMonth(),
@@ -720,21 +740,23 @@ export class AdminPanelDialogComponent {
     }
   }
 
+  // Cuando eliges un mes, guardamos el último día de ese mes y recargamos estadísticas
   onMonthSelected(event: MatDatepickerInputEvent<Date>) {
     if (event.value) {
         const year = event.value.getFullYear();
         const month = event.value.getMonth();
-        // Obtener último día del mes seleccionado
         const lastDay = new Date(year, month + 1, 0); 
         this.selectedMonth = lastDay;
         this.loadStats();
     }
   }
 
+  // Cuando eliges un año, recargamos estadísticas
   onYearSelected() {
     this.loadStats();
   }
 
+  // Esto pone el título del gráfico según el periodo elegido
   getChartTitle(): string {
     return {
       day: 'Día',
@@ -743,6 +765,7 @@ export class AdminPanelDialogComponent {
     }[this.selectedPeriod] as string;
   }
 
+  // Esto pone la etiqueta del eje X del gráfico
   getXAxisLabel(): string {
     return {
       day: 'Horas',
@@ -751,9 +774,9 @@ export class AdminPanelDialogComponent {
     }[this.selectedPeriod] as string;
   }
 
+  // Esta función carga las estadísticas (viajes más reservados, empresas, etc.)
   loadStats() {
     this.loadingStats = true;
-    // Resetear datos anteriores
     this.topTrips = [];
     this.topCompanies = [];
     this.dailyUserReservations = null;
@@ -766,6 +789,7 @@ export class AdminPanelDialogComponent {
       year: this.selectedYear
     };
 
+    // Pedimos los datos al servicio de estadísticas
     this.statsService.getAdvancedStats(params).subscribe({
       next: (data) => {
         this.topTrips = data.topTrips;
@@ -789,6 +813,7 @@ export class AdminPanelDialogComponent {
     });
   }
 
+  // Carga los pagos pendientes
   loadPendingPayments() {
     this.paymentService.getPendingPayments().subscribe({
       next: (response) => {
@@ -805,6 +830,7 @@ export class AdminPanelDialogComponent {
     });
   }
 
+  // Carga las solicitudes de los usuarios
   loadRequests() {
     this.requestService.getRequests().subscribe({
       next: (data) => (this.requests = data),
@@ -812,6 +838,7 @@ export class AdminPanelDialogComponent {
     });
   }
 
+  // Aceptar un pago pendiente
   acceptPayment(paymentId: number) {
     this.paymentService.acceptPayment(paymentId).subscribe({
       next: () => {
@@ -825,6 +852,7 @@ export class AdminPanelDialogComponent {
     });
   }
 
+  // Rechazar un pago pendiente
   rejectPayment(paymentId: number) {
     this.paymentService.rejectPayment(paymentId).subscribe({
       next: () => {
@@ -838,6 +866,7 @@ export class AdminPanelDialogComponent {
     });
   }
 
+  // Aprobar una solicitud de usuario (por ejemplo, para que pase a ser empresa)
   approveRequest(requestId: number) {
     this.requestService.updateRequest(requestId, 'approved').subscribe({
       next: (updatedRequest: any) => {
@@ -851,6 +880,7 @@ export class AdminPanelDialogComponent {
     });
   }
 
+  // Rechazar una solicitud de usuario
   rejectRequest(requestId: number) {
     this.requestService.updateRequest(requestId, 'rejected').subscribe({
       next: () => {
@@ -860,6 +890,7 @@ export class AdminPanelDialogComponent {
     });
   }
 
+  // Da formato a los datos para que se vean bien en los gráficos
   private formatChartData(rawData: any[] | undefined, label: string): any[] {
       const data = rawData || [];
 
@@ -877,12 +908,11 @@ export class AdminPanelDialogComponent {
 
     if (this.selectedPeriod === 'month') {
         const year = this.selectedMonth.getFullYear();
-        const month = this.selectedMonth.getMonth(); // 0-indexed
+        const month = this.selectedMonth.getMonth();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
 
         const completeData = [];
         for (let day = 1; day <= daysInMonth; day++) {
-            // El backend debe devolver d.label como número de día (1,2,3...)
             const existing = data.find(d => Number(d.label) === day);
             completeData.push({
                 name: day.toString(),
@@ -914,6 +944,7 @@ export class AdminPanelDialogComponent {
     }));
   }
 
+  // Traduce el número del mes a su nombre (por ejemplo, 1 -> Ene)
   private translateMonthByNumber(monthNumber: number): string {
     const months: { [key: number]: string } = {
         1: 'Ene', 2: 'Feb', 3: 'Mar', 4: 'Abr',
@@ -923,6 +954,7 @@ export class AdminPanelDialogComponent {
     return months[monthNumber] || '';
   }
 
+  // Esto sirve para poner el nombre de los días o meses en el gráfico
   xAxisTickFormatter = (tick: string | number | undefined) => {
     if (tick === undefined || tick === null) return '';
     
@@ -944,16 +976,18 @@ export class AdminPanelDialogComponent {
     return tick.toString();
   };
   
+  // Esto sirve para que los números del eje Y del gráfico se vean redondeados
   yAxisTickFormatter = (value: number): string => {
     return Math.round(value).toString();
   };
 
+  // Comprueba si todos los datos de los viajes son cero (para no mostrar gráficos vacíos)
   allTripsDataZero(): boolean {
     return Array.isArray(this.tripsData) && this.tripsData.every(d => Number(d.value) === 0);
   }
   
+  // Comprueba si todos los datos de reservas de empresas son cero
   allCompanyReservationsDataZero(): boolean {
     return Array.isArray(this.companyReservationsData) && this.companyReservationsData.every(d => Number(d.value) === 0);
   }  
-
 }

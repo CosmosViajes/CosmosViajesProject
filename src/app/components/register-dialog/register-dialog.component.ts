@@ -96,26 +96,29 @@ interface UserFormData {
   styles: []
 })
 export class RegisterDialogComponent {
+  // Esto sirve para cerrar la ventana de registro y para abrir otras ventanas
   private dialogRef = inject(MatDialogRef);
   private dialog = inject(MatDialog);
 
+  // Aquí guardamos los datos que el usuario va escribiendo en el formulario
   userData = signal<UserFormData>({
     name: '',
     email: '',
     password: '',
     password_confirmation: '',
-    role: 'user'
+    role: 'user' // Por defecto, el usuario es normal
   });
 
-  loading = signal(false);
-  error = signal('');
-  activeTab: 'user' | 'company' = 'user';
+  loading = signal(false); // Esto es true mientras estamos registrando
+  error = signal(''); // Aquí guardamos el mensaje de error si algo sale mal
+  activeTab: 'user' | 'company' = 'user'; // Para saber si el usuario quiere registrarse como persona o como empresa
 
   constructor(
-    private authService: AuthService,
-    private router: Router
+    private authService: AuthService, // Servicio para registrar y loguear usuarios
+    private router: Router // Para movernos a otra página si hace falta
   ) {}
 
+  // Esta función actualiza los datos del usuario cuando escribe en el formulario
   updateUserData(field: keyof UserFormData, value: string) {
     this.userData.update(data => ({
       ...data,
@@ -123,26 +126,30 @@ export class RegisterDialogComponent {
     }));
   }
 
+  // Cambia entre pestaña de usuario normal y empresa
   setActiveTab(tab: 'user' | 'company') {
     this.activeTab = tab;
     const newRole = tab === 'user' ? 'user' : 'company';
     this.updateUserData('role', newRole);
   }
 
+  // Cuando el usuario pulsa el botón de registrarse
   onSubmit() {
     this.loading.set(true);
     const currentData = this.userData();
   
+    // Si las contraseñas no coinciden, mostramos un error
     if (currentData.password !== currentData.password_confirmation) {
       this.error.set('Las contraseñas no coinciden');
       this.loading.set(false);
       return;
     }
   
+    // Llamamos al servicio para registrar el usuario
     this.authService.register(currentData).subscribe({
       next: (response) => {
         if (response.token) {
-          // Autenticación exitosa
+          // Si todo va bien, guardamos los datos y cerramos la ventana
           this.authService.authStatus$.next({
             isAuthenticated: true,
             userData: {
@@ -155,7 +162,7 @@ export class RegisterDialogComponent {
           this.dialogRef.close(true);
           this.router.navigate(['/']);
         } else {
-          // Si el backend no devuelve token, hacer login manual
+          // Si no devuelve token, intentamos hacer login manualmente
           this.authService.login({
             email: currentData.email,
             password: currentData.password
@@ -175,11 +182,13 @@ export class RegisterDialogComponent {
     });
   }
   
+  // Si hay error al iniciar sesión después de registrarse, mostramos un mensaje
   private handleLoginError(err: any) {
     this.loading.set(false);
     this.error.set('Error al iniciar sesión automáticamente');
   }  
 
+  // Si hay error al registrar, mostramos un mensaje claro
   private handleRegistrationError(err: any) {
     if (err.error?.errors?.email) {
       this.error.set('El email ya está registrado');
@@ -188,6 +197,7 @@ export class RegisterDialogComponent {
     }
   }
 
+  // Si el usuario quiere ir a la ventana de login, la abrimos y cerramos esta
   openLoginDialog(): void {
     this.dialogRef.close();
     this.dialog.open(LoginDialogComponent, {

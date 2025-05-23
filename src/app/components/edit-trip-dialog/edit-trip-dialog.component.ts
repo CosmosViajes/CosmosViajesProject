@@ -328,16 +328,19 @@ import { DatePipe } from '@angular/common';
   `]
 })
 export class EditTripDialogComponent implements OnInit {
+  // Aquí guardamos el formulario para editar el viaje y la imagen seleccionada (si hay)
   editForm: FormGroup;
   selectedFile: File | null = null;
+
   constructor(
-    public dialogRef: MatDialogRef<EditTripDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: any,
-    private fb: FormBuilder,
-    private tripService: TripService,
-    private snackBar: MatSnackBar,
-    private datePipe: DatePipe
+    public dialogRef: MatDialogRef<EditTripDialogComponent>, // Para cerrar la ventana
+    @Inject(MAT_DIALOG_DATA) public data: any, // Aquí recibimos los datos del viaje a editar
+    private fb: FormBuilder, // Para crear el formulario
+    private tripService: TripService, // Para enviar los cambios al servidor
+    private snackBar: MatSnackBar, // Para mostrar mensajes rápidos
+    private datePipe: DatePipe // Para dar formato a las fechas
   ) {
+    // Aquí se definen los campos del formulario y las reglas (por ejemplo, que no estén vacíos)
     this.editForm = this.fb.group({
       name: ['', Validators.required],
       type: ['', Validators.required],
@@ -350,11 +353,14 @@ export class EditTripDialogComponent implements OnInit {
     });
   }
 
+  // Cuando se abre la ventana, rellenamos el formulario con los datos del viaje que vamos a editar
   ngOnInit(): void {
     if (this.data && this.data.trip) {
+      // Ponemos las fechas en el formato correcto para el formulario
       const formattedDepartureDate = this.datePipe.transform(this.data.trip.departure, 'yyyy-MM-dd');
       const formattedDurationDate = this.datePipe.transform(this.data.trip.duration, 'yyyy-MM-dd');
 
+      // Rellenamos el formulario con los datos actuales del viaje
       this.editForm.patchValue({
         name: this.data.trip.name,
         type: this.data.trip.type,
@@ -368,38 +374,45 @@ export class EditTripDialogComponent implements OnInit {
     }
   }
 
+  // Cuando el usuario selecciona una nueva imagen, la guardamos
   onFileSelected(event: any): void {
     this.selectedFile = event.target.files[0];
   }
 
+  // Cuando el usuario pulsa el botón de guardar cambios
   onSubmit() {
+    // Si todo está bien en el formulario
     if (this.editForm.valid) {
       const updatedFields: any = {};
+      // Miramos qué campos han cambiado
       Object.keys(this.editForm.controls).forEach(key => {
         if (key !== 'photo' && this.editForm.get(key)?.value !== this.data.trip[key]) {
           updatedFields[key] = this.editForm.get(key)?.value;
         }
       });
 
+      // Si hay una imagen nueva, la añadimos
       if (this.selectedFile) {
         updatedFields['photo'] = this.selectedFile;
       }
 
+      // Si no se ha cambiado nada, avisamos al usuario
       if (Object.keys(updatedFields).length === 0) {
         this.snackBar.open('No hay cambios para guardar', 'Cerrar', { duration: 2000 });
         return;
       }
 
-      // Use FormData to send the file
+      // Creamos los datos para enviar al servidor, incluyendo la imagen si hay
       const formData = new FormData();
       for (const key in updatedFields) {
         formData.append(key, updatedFields[key]);
       }
 
+      // Enviamos los cambios al servidor para actualizar el viaje
       this.tripService.updateTrip(this.data.trip.id, formData).subscribe({
         next: () => {
           this.snackBar.open('Viaje actualizado correctamente', 'Cerrar', { duration: 2000 });
-          this.dialogRef.close('updated');
+          this.dialogRef.close('updated'); // Cerramos la ventana y avisamos que se actualizó
         },
         error: (error) => {
           this.snackBar.open('Error al actualizar el viaje', 'Cerrar', { duration: 2000 });

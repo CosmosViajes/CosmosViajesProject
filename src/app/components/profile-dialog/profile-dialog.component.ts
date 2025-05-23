@@ -94,29 +94,32 @@ import { RequestService } from '../../services/request.service';
     `,
 })
 export class ProfileDialogComponent implements OnInit {
+    // Aquí guardamos la imagen que el usuario sube, la previsualización y los datos del usuario
     selectedFile: File | null = null;
     previewUrl: string | ArrayBuffer | null = null;
     photo!: string;
     userId!: number;
     name!: string;
     email!: string;
-    originalUserData: any = {};
-    loading: boolean = false;
-    hasChanges: boolean = false;
+    originalUserData: any = {}; // Para comparar si el usuario cambió algo
+    loading: boolean = false; // Si estamos guardando datos, esto es true
+    hasChanges: boolean = false; // Si el usuario cambió algo, esto es true
 
     pendingRelogin: boolean = false;
     storedCredentials: { email: string; password: string } | null = null;
 
     constructor(
-        private authService: AuthService,
-        private requestService: RequestService,
-        private dialogRef: MatDialogRef<ProfileDialogComponent>
+        private authService: AuthService, // Para todo lo de usuario y login
+        private requestService: RequestService, // Para pedir cambios de rol
+        private dialogRef: MatDialogRef<ProfileDialogComponent> // Para cerrar la ventana del perfil
     ) { }
 
+    // Cuando se abre el perfil, cargamos los datos del usuario
     ngOnInit(): void {
         this.loadUserData();
     }
 
+    // Carga los datos del usuario desde el sistema o del almacenamiento del navegador
     private loadUserData(): void {
         const authStatus = this.authService.authStatus$.getValue();
         const userData = authStatus.userData || JSON.parse(localStorage.getItem('userData') || '{}');
@@ -125,9 +128,10 @@ export class ProfileDialogComponent implements OnInit {
             this.userId = userData.id;
             this.name = userData.name;
             this.email = userData.email;
+            // Si no tiene foto, le ponemos un avatar con sus iniciales
             this.photo = userData.photo || this.generateAvatarUrl(userData.name);
 
-            // Almacenar copia profunda de los datos originales
+            // Guardamos los datos originales para saber si cambia algo
             this.originalUserData = JSON.parse(JSON.stringify({
                 name: userData.name,
                 email: userData.email,
@@ -136,15 +140,18 @@ export class ProfileDialogComponent implements OnInit {
         }
     }
 
+    // Si el usuario no tiene foto, le generamos una con sus iniciales
     private generateAvatarUrl(name: string): string {
         return `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'Usuario')}&background=random&size=128`;
     }
 
+    // Cuando el usuario quiere cambiar su foto, abrimos el selector de archivos
     triggerFileInput(): void {
         const fileInput = document.querySelector<HTMLInputElement>('input[type="file"]');
         fileInput?.click();
     }
 
+    // Cuando selecciona una nueva foto, la mostramos en pantalla antes de guardar
     onFileSelected(event: Event): void {
         const input = event.target as HTMLInputElement;
         if (input.files?.length) {
@@ -159,7 +166,7 @@ export class ProfileDialogComponent implements OnInit {
         }
     }
 
-    // Verificación de cambios mejorada
+    // Comprobamos si el usuario cambió el nombre, el email o la foto
     checkChanges(): void {
         const nameChanged = this.name !== this.originalUserData.name;
         const emailChanged = this.email !== this.originalUserData.email;
@@ -168,6 +175,7 @@ export class ProfileDialogComponent implements OnInit {
         this.hasChanges = nameChanged || emailChanged || photoChanged;
     }
 
+    // Cuando el usuario pulsa guardar, comprobamos si cambió algo y pedimos la contraseña para confirmar
     updateUser(): void {
         this.checkChanges();
 
@@ -176,31 +184,30 @@ export class ProfileDialogComponent implements OnInit {
             return;
         }
 
-        // Paso 1: Solicitar contraseña antes de actualizar
+        // Pedimos la contraseña antes de guardar los cambios
         this.requestPassword().then((password) => {
             if (!password) return;
 
             this.loading = true;
             const formData = new FormData();
 
-            // Agregar todos los campos (no solo los modificados)
+            // Añadimos todos los datos (nombre, email, foto)
             formData.append('name', this.name);
             formData.append('email', this.email);
             if (this.selectedFile) formData.append('photo', this.selectedFile);
 
-            // Almacenar credenciales para reconexión, utiliza el nuevo email si se ha cambiado
+            // Si el usuario cambió el email, usamos el nuevo para volver a iniciar sesión
             const newEmail = this.email !== this.originalUserData.email ? this.email : this.originalUserData.email;
             this.storedCredentials = {
                 email: newEmail,
                 password: password
             };
 
+            // Pedimos al servidor que actualice los datos
             this.authService.updateUser(this.userId, formData).subscribe({
                 next: (response) => {
-                    // Paso 2: Cerrar sesión después de actualizar
+                    // Cerramos sesión y volvemos a iniciar con los nuevos datos
                     this.authService.logout();
-
-                    // Paso 3: Reconexión automática con nueva configuración
                     this.reconnectUser(response.user);
                 },
                 error: (error) => {
@@ -212,6 +219,7 @@ export class ProfileDialogComponent implements OnInit {
         });
     }
 
+    // Pedimos la contraseña al usuario para confirmar los cambios
     private requestPassword(): Promise<string | null> {
         return new Promise((resolve) => {
             Swal.fire({
@@ -236,24 +244,24 @@ export class ProfileDialogComponent implements OnInit {
         });
     }
 
+    // Cuando el usuario cambia datos importantes, cerramos sesión y volvemos a iniciar con los nuevos datos
     private reconnectUser(updatedUser: any): void {
         if (!this.storedCredentials) {
             this.loading = false;
             return;
         }
 
-        // Intentar reconexión con las credenciales almacenadas
+        // Volvemos a iniciar sesión con el email y contraseña guardados
         this.authService.login({
             email: this.storedCredentials.email,
             password: this.storedCredentials.password
         }).subscribe({
             next: () => {
-                // Actualizar datos del usuario con la nueva información
+                // Actualizamos los datos del usuario en el sistema
                 this.authService.updateAuthStatus({
                     isAuthenticated: true,
                     userData: {
                         ...updatedUser,
-                        // Preservar datos sensibles que no vienen en la respuesta
                         is_company: this.originalUserData.is_company,
                         is_provider: this.originalUserData.is_provider
                     }
@@ -275,6 +283,7 @@ export class ProfileDialogComponent implements OnInit {
         });
     }
 
+    // Si hay error, mostramos un mensaje claro
     private getErrorMessage(error: any): string {
         if (error.error?.errors) {
             return Object.values(error.error.errors).join(', ');
@@ -282,6 +291,7 @@ export class ProfileDialogComponent implements OnInit {
         return error.error?.message || 'Error al actualizar el perfil';
     }
 
+    // Si el usuario quiere cerrar la ventana, comprobamos si hay cambios sin guardar
     closeDialog(): void {
         this.checkChanges();
 
@@ -301,6 +311,7 @@ export class ProfileDialogComponent implements OnInit {
         }
     }
 
+    // El usuario puede pedir ser empresa o proveedor desde aquí
     requestRole(type: 'company' | 'provider') {
         this.requestService.submitRequest({
           user_id: this.userId,

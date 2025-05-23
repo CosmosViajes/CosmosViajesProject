@@ -74,11 +74,14 @@ import { TranslateStatusPipe } from '../../pipes/translate-status.pipe';
   `]
 })
 export class PaymentConfirmationComponent {
+  // El constructor recibe los datos del pago (si fue aprobado, rechazado o está pendiente)
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: { paymentResponse: PaymentApiResponse }
   ) {}
 
+  // Esta función devuelve el icono que se va a mostrar según el estado del pago
   get statusIcon(): string {
+    // Si el pago fue aprobado, sale un "check"; si fue rechazado, sale un "error"; si está pendiente, sale un reloj
     return {
       'approved': 'check_circle',
       'rejected': 'error',
@@ -86,7 +89,9 @@ export class PaymentConfirmationComponent {
     }[this.data.paymentResponse.status];
   }
 
+  // Esta función devuelve el color que se va a mostrar según el estado del pago
   get statusColor(): string {
+    // Verde si está aprobado, rojo si fue rechazado, naranja si está pendiente
     return {
       'approved': 'green',
       'rejected': 'red',

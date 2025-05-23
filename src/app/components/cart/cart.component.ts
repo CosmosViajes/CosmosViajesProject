@@ -11,6 +11,8 @@ import { finalize, take } from 'rxjs/operators';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { PaymentConfirmationComponent } from '../payment-confirmation/payment-confirmation.component';
 
+// Este componente es el carrito de la web, donde ves los viajes que tienes reservados y puedes pagar
+
 @Component({
   selector: 'app-cart',
   standalone: true,
@@ -25,12 +27,14 @@ import { PaymentConfirmationComponent } from '../payment-confirmation/payment-co
   styleUrls: ['./cart.component.css']
 })
 export class CartComponent implements OnInit {
+  // Aquí guardamos los viajes reservados, el precio total, si está cargando, si hay error, y si es cuenta de empresa
   reservedTrips = signal<any[]>([]);
   totalPrice = signal<number>(0);
   isLoading = signal<boolean>(false);
   paymentError = signal<string | null>(null);
   isBusinessAccount = signal<boolean>(false);
   
+  // Guardamos los servicios que vamos a usar, como los de pagos, usuarios, etc.
   private dialog = inject(MatDialog);
   private paymentService = inject(PaymentService);
   private authService = inject(AuthService);
@@ -39,6 +43,7 @@ export class CartComponent implements OnInit {
     private cartService: CartService,
     private router: Router
   ) { 
+    // Cada vez que cambia el usuario (por ejemplo, inicia sesión), miramos si es empresa y cargamos sus reservas
     this.authService.authStatus$.subscribe(() => {
       this.isBusinessAccount.set(this.authService.isCompany());
       if (this.authService.authStatus$.value.isAuthenticated) {
@@ -48,14 +53,16 @@ export class CartComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // Al iniciar, miramos si es empresa y cargamos reservas si está logueado
     this.isBusinessAccount.set(this.authService.isCompany());
     
     if (this.authService.authStatus$.value.isAuthenticated) {
       this.loadReservations();
     }
-    this.setupCacheSync();
+    this.setupCacheSync(); // Preparamos para que el carrito se mantenga actualizado
   }
 
+  // Calcula cuánto se ahorra una empresa por los descuentos
   calculateSavings(): number {
     if (!this.isBusinessAccount()) return 0;
     
@@ -64,10 +71,12 @@ export class CartComponent implements OnInit {
     }, 0);
   }
 
+  // Esto ayuda a que Angular sepa qué viaje es cuál en la lista
   trackByTripId(index: number, trip: any): number {
     return trip.id;
   }
 
+  // Prepara para que el carrito se actualice si cambia en otra pestaña
   private setupCacheSync(): void {
     window.addEventListener('storage', (event) => {
       if (event.key === 'cart_reservations') {
@@ -76,20 +85,22 @@ export class CartComponent implements OnInit {
     });
   }
 
+  // Carga los datos del carrito guardados en el navegador
   private loadFromCache(): void {
     const cached = localStorage.getItem('cart_reservations');
     if (cached) {
       const data = JSON.parse(cached);
-      // Solo aplicar descuento si no está ya aplicado
+      // Mantenemos el precio que ya tenía el viaje
       const tripsWithDiscount = data.reservations.map((trip: any) => ({
         ...trip,
-        price: trip.price // Mantener el precio ya descontado del caché
+        price: trip.price
       }));
       this.reservedTrips.set(tripsWithDiscount);
       this.totalPrice.set(data.totalPrice);
     }
   }
 
+  // Guarda el carrito en el navegador
   private saveToCache(): void {
     localStorage.setItem('cart_reservations', JSON.stringify({
       reservations: this.reservedTrips(),
@@ -98,12 +109,14 @@ export class CartComponent implements OnInit {
     window.dispatchEvent(new Event('storage'));
   }
 
+  // Calcula el precio total sumando el precio de cada viaje por la cantidad
   private calculateTotal(trips: any[]): number {
     return trips.reduce((total, trip) => {
       return total + (trip.price * trip.quantity);
     }, 0);
   }
 
+  // Carga las reservas del usuario desde el servidor
   loadReservations(): void {
     this.isLoading.set(true);
     const userId = this.authService.authStatus$.value?.userData?.id;
@@ -116,6 +129,7 @@ export class CartComponent implements OnInit {
         )
         .subscribe({
           next: (reservations) => {
+            // Agrupa las reservas por viaje y aplica descuento si es empresa
             const grouped = this.groupReservations(reservations);
             const discountedTrips = this.applyBusinessDiscount(grouped);
             this.reservedTrips.set(discountedTrips);
@@ -130,6 +144,7 @@ export class CartComponent implements OnInit {
     }
   }
 
+  // Si es empresa, aplica un descuento al precio de cada viaje
   private applyBusinessDiscount(trips: any[]): any[] {
     return trips.map(trip => ({
       ...trip,
@@ -138,6 +153,7 @@ export class CartComponent implements OnInit {
     }));
   }
 
+  // Junta las reservas del mismo viaje y suma la cantidad
   private groupReservations(reservations: any[]): any[] {
     const grouped: { [key: number]: any } = {};
     
@@ -156,6 +172,7 @@ export class CartComponent implements OnInit {
     return Object.values(grouped);
   }
 
+  // Muestra los detalles de un viaje en una ventana emergente
   viewTripDetails(trip: any): void {
     this.dialog.open(TripDetailsComponent, {
       panelClass: 'custom-dialog-container',
@@ -165,6 +182,7 @@ export class CartComponent implements OnInit {
     });
   }
 
+  // Cuando el usuario quiere pagar, se procesa el pago
   processPayment(): void {
     this.isLoading.set(true);
     this.paymentError.set(null);
@@ -189,16 +207,16 @@ export class CartComponent implements OnInit {
         next: (response: any) => {
           localStorage.removeItem('cart_reservations');
           
-          // Abrir diálogo modal en lugar de navegar
+          // Abre una ventana de confirmación de pago
           const dialogRef = this.dialog.open(PaymentConfirmationComponent, {
             width: '500px',
             data: { paymentResponse: response },
-            disableClose: true // Evitar cerrar haciendo clic fuera
+            disableClose: true // No se puede cerrar haciendo clic fuera
           });
   
-          // Opcional: Acción después de cerrar el diálogo
+          // Cuando se cierra la ventana, volvemos al inicio
           dialogRef.afterClosed().subscribe(() => {
-            this.router.navigate(['/']); // Redirigir al home
+            this.router.navigate(['/']);
           });
         },
         error: (err) => {
@@ -208,6 +226,7 @@ export class CartComponent implements OnInit {
       });
   }
 
+  // Recarga el carrito (por ejemplo, si se ha actualizado algo)
   refreshCart(): void {
     this.loadReservations();
   }

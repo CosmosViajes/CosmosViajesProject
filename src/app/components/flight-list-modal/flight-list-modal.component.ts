@@ -3,7 +3,7 @@ import { TripService } from '../../services/trip.service';
 import { MatDialog } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
 import { TripDetailsComponent } from '../trip-details/trip-details.component';
-import { AuthService } from '../../services/auth.service'; // Asegúrate de tener este servicio
+import { AuthService } from '../../services/auth.service'; // Servicio para saber si el usuario es empresa
 
 @Component({
   selector: 'app-flight-list-modal',
@@ -13,18 +13,19 @@ import { AuthService } from '../../services/auth.service'; // Asegúrate de tene
   ]
 })
 export class FlightListModalComponent {
-  @Input() providerId!: number;
-  flights: any[] = [];
-  loading = true;
-  showModal = false;
-  isCompanyUser: boolean = false;
+  @Input() providerId!: number; // Aquí recibimos el id del proveedor (empresa)
+  flights: any[] = []; // Aquí guardamos la lista de viajes de ese proveedor
+  loading = true; // Esto es para saber si estamos cargando los datos
+  showModal = false; // Esto es para mostrar o esconder la ventana de los viajes
+  isCompanyUser: boolean = false; // Esto nos dice si el usuario es una empresa
   private dialog = inject(MatDialog);
 
   constructor(
-    private tripService: TripService,
-    private authService: AuthService // Servicio que verifica el tipo de usuario
+    private tripService: TripService, // Servicio para pedir los viajes al servidor
+    private authService: AuthService // Servicio para saber si el usuario es empresa
   ) {}
 
+  // Cada vez que cambia el id del proveedor, miramos si el usuario es empresa y cargamos los viajes
   ngOnChanges() {
     if (this.providerId) {
       this.checkUserType();
@@ -32,29 +33,33 @@ export class FlightListModalComponent {
     }
   }
 
+  // Aquí comprobamos si el usuario es una empresa
   checkUserType() {
-    // Implementación depende de tu AuthService
     this.isCompanyUser = this.authService.isCompany();
   }
 
+  // Aquí pedimos los viajes del proveedor al servidor
   loadFlights() {
     this.tripService.getProviderFlights(this.providerId).subscribe({
       next: (data) => {
+        // Si el usuario es empresa, aplicamos descuento al precio
         this.flights = data.map(flight => ({
           ...flight,
           discountedPrice: this.isCompanyUser ? this.calculateDiscount(flight.price) : flight.price
         }));
-        this.loading = false;
+        this.loading = false; // Ya hemos terminado de cargar
       },
-      error: () => this.loading = false
+      error: () => this.loading = false // Si hay error, dejamos de cargar
     });
   }
 
+  // Calcula el precio con descuento (15% menos)
   calculateDiscount(price: number): number {
     const discountRate = 0.15; // 15% de descuento
     return price * (1 - discountRate);
   }
 
+  // Muestra u oculta la ventana con la lista de viajes
   toggleModal() {
     this.showModal = !this.showModal;
     if (this.showModal) {
@@ -63,6 +68,7 @@ export class FlightListModalComponent {
     }
   }
 
+  // Muestra los detalles de un viaje en una ventana emergente
   viewTripDetails(trip: any): void {
     this.dialog.open(TripDetailsComponent, {
       panelClass: 'custom-dialog-container',

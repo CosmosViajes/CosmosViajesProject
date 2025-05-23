@@ -42,7 +42,6 @@ export class ExperienciasService {
 
   toggleLike(experienciaId: number): Observable<any> {
     const userId = this.authService.getCurrentUserId();
-    // Comprobar si el usuario está autenticado (id válido)
     if (!Number.isInteger(userId) || userId === null || userId === undefined) {
       return throwError(() => new Error('Debes iniciar sesión o crear una cuenta para dar like.'));
     }

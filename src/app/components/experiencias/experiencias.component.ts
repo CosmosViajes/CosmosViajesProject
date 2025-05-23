@@ -467,30 +467,43 @@ import Swal from 'sweetalert2';
 })
 
 export class ExperienciasComponent implements AfterViewInit, OnInit, OnDestroy {
+  // Aquí guardamos la imagen que el usuario selecciona para subir
   selectedFile?: File;
+  // Aquí va la descripción de la imagen o experiencia
   description = '';
+  // Aquí va el texto de un comentario nuevo que escriba el usuario
   newComment = '';
+  // Esto es para saber si el contenido de la página es corto
   isShortContent = false;
+  // Lista de comentarios (experiencias sin imagen)
   comments: any[] = [];
+  // Lista de imágenes subidas por los usuarios
   galleryImages: any[] = [];
+  // Aquí guardamos los "me gusta" que ha dado el usuario
   userLikes: Set<number> = new Set();
+  // Imagen seleccionada para ver en grande
   selectedImage: any = null;
+  // Si es true, se muestra la imagen en grande
   showImageModal: boolean = false;
+  // Aquí guardamos información de si el usuario está logueado o no
   authStatus: any = null;
 
   constructor(
     private cdr: ChangeDetectorRef,
     private authService: AuthService,
     private experienciasService: ExperienciasService,
-    private dialog: MatDialog // Solo MatDialog aquí
+    private dialog: MatDialog // Para abrir ventanas de diálogo
   ) {}
 
+  // Cuando el usuario selecciona una imagen, la guardamos aquí
   onFileSelected(event: any): void {
     this.selectedFile = event.target.files[0];
   }
 
+  // Cuando el usuario quiere subir una imagen, comprobamos si está logueado
   openUploadDialog(): void {
     if (!this.authStatus?.isAuthenticated) {
+      // Si no está logueado, le mostramos un mensaje para que inicie sesión o se registre
       Swal.fire({
         icon: 'info',
         title: '¡Debes iniciar sesión o registrarte!',
@@ -516,16 +529,17 @@ export class ExperienciasComponent implements AfterViewInit, OnInit, OnDestroy {
         }
       }).then((result) => {
         if (result.isConfirmed) {
-          // Lógica para abrir el diálogo de login
+          // Si elige iniciar sesión, abrimos el diálogo de login
           this.openLoginDialog();
         } else if (result.dismiss === Swal.DismissReason.cancel) {
-          // Lógica para abrir el diálogo de registro
+          // Si elige registrarse, abrimos el diálogo de registro
           this.openRegisterDialog();
         }
       });
       return;
     }
   
+    // Si está logueado, abrimos la ventana para subir la imagen
     const dialogRef = this.dialog.open(UploadImageDialogComponent, {
       width: '500px',
       data: { description: '' }
@@ -538,7 +552,7 @@ export class ExperienciasComponent implements AfterViewInit, OnInit, OnDestroy {
     });
   }
   
-  // Métodos para los diálogos de login y registro (ajusta según tu app)
+  // Abrir ventana de login
   openLoginDialog() {
     this.dialog.open(LoginDialogComponent, {
       width: '60vw',
@@ -548,6 +562,7 @@ export class ExperienciasComponent implements AfterViewInit, OnInit, OnDestroy {
     });
   }
   
+  // Abrir ventana de registro
   openRegisterDialog() {
     this.dialog.open(RegisterDialogComponent, {
       width: '60vw',
@@ -557,10 +572,10 @@ export class ExperienciasComponent implements AfterViewInit, OnInit, OnDestroy {
     });
   }  
 
+  // Cuando se inicia el componente, cargamos experiencias y los likes del usuario
   ngOnInit() {
     this.authStatus = this.authService.authStatus$?.getValue?.() || null;
-    
-    // Cargar primero experiencias, luego likes del usuario
+    // Primero cargamos las experiencias, luego los "me gusta"
     this.loadExperiencias().pipe(
       switchMap(() => this.loadUserLikes()),
       tap(() => {
@@ -569,10 +584,13 @@ export class ExperienciasComponent implements AfterViewInit, OnInit, OnDestroy {
     ).subscribe();
   }
 
+  // Cargamos todas las experiencias (comentarios y fotos)
   loadExperiencias() {
     return this.experienciasService.getExperiencias().pipe(
         tap(data => {
+            // Los comentarios son experiencias sin imagen
             this.comments = data.filter((exp: any) => !exp.image);
+            // Las imágenes van a la galería
             this.galleryImages = data.filter((exp: any) => exp.image).map((img: any) => ({
                 id: img.id,
                 url: img.image,
@@ -583,6 +601,7 @@ export class ExperienciasComponent implements AfterViewInit, OnInit, OnDestroy {
     );
   }
 
+  // Cargamos los "me gusta" que ha dado el usuario
   loadUserLikes() {
     return this.experienciasService.getUserLikes().pipe(
       tap(likes => {
@@ -594,8 +613,10 @@ export class ExperienciasComponent implements AfterViewInit, OnInit, OnDestroy {
     );
   }
 
+  // Añadir un comentario nuevo
   addComment() {
     if (!this.authStatus?.isAuthenticated) {
+      // Si no está logueado, mostramos mensaje para iniciar sesión o registrarse
       Swal.fire({
         icon: 'info',
         title: '¡Debes iniciar sesión o registrarte!',
@@ -629,6 +650,7 @@ export class ExperienciasComponent implements AfterViewInit, OnInit, OnDestroy {
       return;
     }
   
+    // Si escribió algo, lo mandamos al servidor
     if (this.newComment.trim()) {
       const authStatus = this.authService.authStatus$.getValue();
       const userName = authStatus?.userData?.name || 'Usuario';
@@ -640,26 +662,28 @@ export class ExperienciasComponent implements AfterViewInit, OnInit, OnDestroy {
         text: this.newComment
       }).subscribe({
         next: (newExp) => {
+          // Añadimos el comentario al principio de la lista
           this.comments.unshift(newExp);
           this.newComment = '';
         },
         error: (err) => console.error('Error guardando experiencia:', err)
       });
     }
-  }  
+  }
 
+  // Dar o quitar "me gusta" a un comentario
   likeComment(commentId: number) {
-    // Efecto visual: azul al dar like, verde si ya está dado, rojo al quitar
     const authStatus = this.authService.authStatus$.getValue();
     const userId = authStatus?.userData?.id || 0;
     const alreadyLiked = this.userLikes.has(commentId);
     this.experienciasService.toggleLike(commentId).subscribe({
       next: (res) => {
-        // Actualiza likes en el comentario
+        // Actualizamos el número de likes en el comentario
         const comment = this.comments.find(c => c.id === commentId);
         if (comment) {
           comment.likes = res.likes;
         }
+        // Si ahora le gusta, lo añadimos a la lista de likes, si no, lo quitamos
         if (res.liked) {
           this.userLikes.add(commentId);
           this.animateLike(commentId, alreadyLiked ? 'green' : 'blue');
@@ -669,7 +693,7 @@ export class ExperienciasComponent implements AfterViewInit, OnInit, OnDestroy {
         }
       },
       error: (err) => {
-      // Mostrar modal o alerta
+        // Si hay error, mostramos mensaje para iniciar sesión
         Swal.fire({
           title: '¡Atención!',
           text: 'Debes iniciar sesión o crear una cuenta para dar like.',
@@ -680,6 +704,7 @@ export class ExperienciasComponent implements AfterViewInit, OnInit, OnDestroy {
     });
   }
 
+  // Animación para el botón de "me gusta"
   animateLike(commentId: number, color: 'blue' | 'green' | 'red') {
     const btn = document.getElementById('like-btn-' + commentId);
     if (btn) {
@@ -688,6 +713,7 @@ export class ExperienciasComponent implements AfterViewInit, OnInit, OnDestroy {
     }
   }
 
+  // Comprueba si el contenido de la página es corto para ajustar el diseño
   checkContentHeight(): void {
     setTimeout(() => {
       const contentHeight = Math.max(
@@ -701,15 +727,18 @@ export class ExperienciasComponent implements AfterViewInit, OnInit, OnDestroy {
     }, 100);
   }  
 
+  // Cuando la vista ya está lista, comprobamos la altura del contenido
   ngAfterViewInit() {
     this.checkContentHeight();
     window.addEventListener('resize', this.checkContentHeight.bind(this));
   }
 
+  // Cuando se destruye el componente, quitamos el evento de resize
   ngOnDestroy() {
     window.removeEventListener('resize', this.checkContentHeight.bind(this));
   }
 
+  // Borrar un comentario
   deleteComment(commentId: number) {
     Swal.fire({
       title: '¿Eliminar comentario?',
@@ -734,16 +763,17 @@ export class ExperienciasComponent implements AfterViewInit, OnInit, OnDestroy {
     });
   }
   
+  // Saber si un comentario es del usuario actual
   isCurrentUserComment(comment: any): boolean {
     const authStatus = this.authService.authStatus$.getValue();
     return authStatus?.userData?.id === comment.user_id;
   }
 
+  // Subir una imagen nueva
   uploadImage(data: { image: File, description: string }): void {
     const formData = new FormData();
     formData.append('image', data.image);
     formData.append('description', data.description);
-
     this.experienciasService.uploadImage(formData).subscribe({
       next: (newImage) => {
         this.galleryImages.unshift(newImage);
@@ -752,16 +782,19 @@ export class ExperienciasComponent implements AfterViewInit, OnInit, OnDestroy {
     });
   }
 
+  // Abrir la imagen en grande
   openImageModal(image: any): void {
     this.selectedImage = image;
     this.showImageModal = true;
   }
 
+  // Cerrar la imagen en grande
   closeImageModal(): void {
     this.showImageModal = false;
     this.selectedImage = null;
   }
 
+  // Borrar una imagen de la galería
   deleteImage(imageId: number): void {
     Swal.fire({
       title: '¿Eliminar imagen?',
@@ -783,10 +816,9 @@ export class ExperienciasComponent implements AfterViewInit, OnInit, OnDestroy {
     });
   }
 
+  // Saber si una imagen es del usuario actual
   isCurrentUserImage(image: any): boolean {
     const authStatus = this.authService.authStatus$.getValue();
-    
     return authStatus?.isAuthenticated && authStatus.userData?.id === image.user_id;
   }  
-
 }
