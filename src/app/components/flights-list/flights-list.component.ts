@@ -226,6 +226,7 @@ nav.menu {
 export class FlightsListComponent implements OnInit, OnDestroy {
   // Aquí guardamos datos para dibujar estrellas de fondo (es solo decoración)
   starsArray: { top: string; left: string; opacity: number; transition: boolean }[] = [];
+  private previousFlightsCount: number = 0;
 
   showNoResults = false; // Si no hay resultados en la búsqueda, mostramos un mensaje
   searchTimer: any; // Temporizador para la búsqueda
@@ -310,7 +311,7 @@ export class FlightsListComponent implements OnInit, OnDestroy {
     // Temporizador mínimo de 3 segundo
     this.minLoadTimer = setTimeout(() => {
       this.isLoading = false;
-    }, 3000);
+    }, 5000);
 
     // Temporizador máximo de 10 segundos para errores
     this.maxLoadTimer = setTimeout(() => {
@@ -369,26 +370,18 @@ export class FlightsListComponent implements OnInit, OnDestroy {
 
   // Cada 10 segundos, pedimos los vuelos al servidor para ver si hay cambios
   private startPolling(): void {
-    this.pollingSubscription = timer(0, this.pollingInterval).pipe(
+    this.pollingSubscription = timer(0, 5000).pipe(
       takeWhile(() => this.isComponentAlive),
       switchMap(() => {
         if (!this.isLoading) this.isCheckingForUpdates = true;
         return this.tripService.getFlights();
       }),
-      distinctUntilChanged((prev, curr) => 
-        JSON.stringify(prev) === JSON.stringify(this.previousFlights)
-      )
+      distinctUntilChanged((prev, curr) => prev.length === curr.length)
     ).subscribe({
       next: (data) => {
-        const newFlights = data.map(flight => ({
-          ...flight,
-          companyLogoUrl: flight.company?.logo_url || 'assets/default-company-logo.png'
-        }));
-        
-        if (this.haveFlightsChanged(newFlights)) {
-          this.handleNewFlightsDetected(newFlights);
+        if (this.haveFlightsChanged(data)) {
+          this.handleNewFlightsDetected(data);
         }
-        
         this.isCheckingForUpdates = false;
         this.lastUpdated = new Date();
       },
@@ -399,42 +392,45 @@ export class FlightsListComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Comprobamos si la lista de vuelos ha cambiado
+  // Modificar el método haveFlightsChanged
   private haveFlightsChanged(newFlights: Flight[]): boolean {
-    return JSON.stringify(newFlights) !== JSON.stringify(this.previousFlights);
+    const currentCount = this.flights.length;
+    const newCount = newFlights.length;
+    
+    // Solo considerar cambios cuando hay nuevos vuelos
+    return newCount > currentCount;
   }
 
   // Si hay vuelos nuevos o se han quitado, mostramos un aviso durante 5 segundos
   private handleNewFlightsDetected(newFlights: Flight[]): void {
-    const addedFlights = newFlights.filter(nf => 
-      !this.previousFlights.some(pf => pf.id === nf.id)
-    );
+    const newCount = newFlights.length;
     
-    const removedFlights = this.previousFlights.filter(pf => 
-      !newFlights.some(nf => nf.id === pf.id)
-    );
-
-    if (addedFlights.length > 0 || removedFlights.length > 0) {
+    if (newCount > this.previousFlightsCount) {
       this.showUpdateNotification = true;
       setTimeout(() => this.showUpdateNotification = false, 5000);
+      
+      // Actualizar lista y contador
+      this.previousFlightsCount = newCount;
+      this.handleFlightData(newFlights);
     }
-    
-    this.previousFlights = [...newFlights];
   }
 
   animationState = 'idle'; // Para animaciones de búsqueda
 
   // Cuando recibimos los vuelos, los guardamos y filtramos según la búsqueda
   private handleFlightData(data: Flight[]): void {
-    this.flights = data.map(flight => ({
-      ...flight    }));
+    // Conservar vuelos existentes y agregar nuevos
+    const newFlights = data.filter(newFlight => 
+      !this.flights.some(existingFlight => existingFlight.id === newFlight.id)
+    );
     
+    this.flights = [...this.flights, ...newFlights];
     this.filterFlights(this.currentSearch);
     
-    // Solo ocultar si ya pasó el mínimo de 1 segundo
     if (Date.now() - this.loadStartTime >= 1000) {
       this.isLoading = false;
     }
+    
     this.showRefresh = this.flights.length === 0;
     this.lastUpdated = new Date();
   }
