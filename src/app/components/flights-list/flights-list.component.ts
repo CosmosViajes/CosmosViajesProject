@@ -391,7 +391,7 @@ export class FlightsListComponent implements OnInit, OnDestroy {
       if (this.isComponentAlive && !this.flights.length) {
         this.startInitialLoad();
       }
-    }, 3000);
+    }, 15000);
   }
 
   // Cada 10 segundos, pedimos los vuelos al servidor para ver si hay cambios
