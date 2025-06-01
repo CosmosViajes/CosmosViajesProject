@@ -1,7 +1,7 @@
 <div class="p-8 max-w-7xl mx-auto" style="min-height: 100vh;">
   <!-- Encabezado mejorado -->
   <div class="flex justify-between items-center mb-8">
-    <h2 class="text-3xl font-bold text-gray-800">Empresas Proveedoras</h2>
+    <h2 class="text-3xl font-bold">Empresas Proveedoras</h2>
     <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
       {{ providers.length }} {{ providers.length === 1 ? 'proveedor' : 'proveedores' }}
     </span>
@@ -24,7 +24,7 @@
           <div class="p-5">
             <div class="flex items-start justify-between">
               <div>
-                <h3 class="text-xl font-semibold text-gray-800">{{ provider.name }}</h3>
+                <h3 class="text-xl font-semibold">{{ provider.name }}</h3>
                 @if (provider.email) {
                   <p class="text-gray-500 text-sm mt-1">{{ provider.email }}</p>
                 }
