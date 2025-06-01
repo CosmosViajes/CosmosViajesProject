@@ -7,7 +7,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { TripService } from '../../services/trip.service';
 import { Flight } from '../../models/flight.model';
 import { timer, Subscription } from 'rxjs';
-import { switchMap, takeWhile, distinctUntilChanged, filter } from 'rxjs/operators';
+import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
   selector: 'app-flights-list',
@@ -259,8 +259,6 @@ export class FlightsListComponent implements OnInit, OnDestroy {
   loadTimer: any; // Temporizador para la carga inicial
   currentSearch = ''; // Lo que el usuario ha escrito en la barra de búsqueda
 
-  private flightsSubscription?: Subscription;
-
   constructor(private tripService: TripService) {}
 
   private previousFlights: Flight[] = []; // Guardamos la lista anterior para ver si ha cambiado
@@ -303,27 +301,27 @@ export class FlightsListComponent implements OnInit, OnDestroy {
 
   // Cuando se inicia el componente
   ngOnInit(): void {
-    this.generateStars();
-    this.setupFlightUpdates();
-    this.startInitialLoad();
+    this.startInitialLoad(); // Cargamos los vuelos por primera vez
+    this.generateStars(); // Dibujamos las estrellas
     
-    setInterval(() => this.updateRandomStars(), 1500);
-  }
-
-  private setupFlightUpdates(): void {
-    this.flightsSubscription = this.tripService.getFlightsUpdates().pipe(
-      filter(() => !this.isLoading)
-    ).subscribe(() => {
-      this.loadFlights();
-    });
+    setInterval(() => {
+      this.updateRandomStars();
+    }, Math.random() * (1000 - 500) + 500);
   }
 
   // Carga inicial de los vuelos
   public startInitialLoad(): void {
     this.isLoading = true;
     this.hasError = false;
-    this.flights = [];
-    this.filteredFlights = [];
+    this.flights = []; // Limpiar lista existente
+    this.filteredFlights = []; // Limpiar filtrados
+
+    // Temporizador máximo reducido a 10 segundos
+    this.maxLoadTimer = setTimeout(() => {
+      if (this.isLoading) {
+        this.handleLoadError(new Error('Timeout de carga'));
+      }
+    }, 10000);
 
     this.loadFlights();
   }
@@ -337,9 +335,8 @@ export class FlightsListComponent implements OnInit, OnDestroy {
   // Cuando se destruye el componente, paramos los temporizadores y actualizaciones
   ngOnDestroy(): void {
     this.isComponentAlive = false;
-    this.flightsSubscription?.unsubscribe();
     this.pollingSubscription?.unsubscribe();
-    this.clearLoadTimers();
+    if (this.searchTimer) clearTimeout(this.searchTimer);
   }
 
   // Pedimos la lista de vuelos al servidor
@@ -347,29 +344,30 @@ export class FlightsListComponent implements OnInit, OnDestroy {
     this.tripService.getFlights().subscribe({
       next: (data) => {
         this.handleFlightData(data);
-        this.clearLoadTimers();
+        this.clearLoadTimer();
       },
       error: (err) => {
         this.handleLoadError(err);
-        this.retryLoadWithBackoff();
+        this.retryLoadWithBackoff(3, 2000); // 3 reintentos con backoff
       }
     });
   }
 
-  private retryLoadWithBackoff(retries = 3, delay = 1000): void {
-    if (retries > 0) {
+  private retryLoadWithBackoff(retriesLeft: number, delay: number): void {
+    if (retriesLeft > 0) {
       setTimeout(() => {
-        console.log(`Reintentando carga (intentos restantes: ${retries})`);
+        console.log(`Reintento de carga (${retriesLeft} restantes)`);
         this.loadFlights();
-        this.retryLoadWithBackoff(retries - 1, delay * 2);
+        this.retryLoadWithBackoff(retriesLeft - 1, delay * 2);
       }, delay);
     } else {
-      this.handleLoadError(new Error('Máximo de reintentos alcanzado'));
+      this.handleLoadError(new Error('Falló después de 3 reintentos'));
     }
   }
 
+
   // Quitamos el temporizador de carga si ya no hace falta
-  private clearLoadTimers(): void {
+  private clearLoadTimer(): void {
     clearTimeout(this.minLoadTimer);
     clearTimeout(this.maxLoadTimer);
   }
@@ -381,74 +379,44 @@ export class FlightsListComponent implements OnInit, OnDestroy {
     this.flights = [];
     this.filteredFlights = [];
     this.initialLoad = false;
-    this.clearLoadTimers();
+    this.clearLoadTimer();
   }
 
   // Cada 10 segundos, pedimos los vuelos al servidor para ver si hay cambios
   private startPolling(): void {
-    this.pollingSubscription = timer(0, 5000).pipe(
+    // Detener polling existente si hay
+    this.pollingSubscription?.unsubscribe(); 
+    
+    this.pollingSubscription = timer(15000, 15000).pipe( // Esperar 15s después de carga inicial
       takeWhile(() => this.isComponentAlive),
-      switchMap(() => {
-        if (!this.isLoading) this.isCheckingForUpdates = true;
-        return this.tripService.getFlights();
-      }),
-      distinctUntilChanged((prev, curr) => prev.length === curr.length)
+      switchMap(() => this.tripService.getFlights()),
+      distinctUntilChanged((prev, curr) => 
+        JSON.stringify(prev) === JSON.stringify(curr)
+      )
     ).subscribe({
-      next: (data) => {
-        if (this.haveFlightsChanged(data)) {
-          this.handleNewFlightsDetected(data);
-        }
-        this.isCheckingForUpdates = false;
-        this.lastUpdated = new Date();
-      },
-      error: (err) => {
-        console.error('Error en actualización automática:', err);
-        this.isCheckingForUpdates = false;
-      }
+      next: (data) => this.handlePollingUpdate(data),
+      error: (err) => console.error('Error en polling:', err)
     });
   }
 
-  // Modificar el método haveFlightsChanged
-  private haveFlightsChanged(newFlights: Flight[]): boolean {
-    const currentCount = this.flights.length;
-    const newCount = newFlights.length;
-    
-    // Solo considerar cambios cuando hay nuevos vuelos
-    return newCount > currentCount;
-  }
-
-  // Si hay vuelos nuevos o se han quitado, mostramos un aviso durante 5 segundos
-  private handleNewFlightsDetected(newFlights: Flight[]): void {
-    const newCount = newFlights.length;
-    
-    if (newCount > this.previousFlightsCount) {
+  private handlePollingUpdate(newData: Flight[]): void {
+    if (newData.length > this.flights.length) {
       this.showUpdateNotification = true;
       setTimeout(() => this.showUpdateNotification = false, 5000);
-      
-      // Actualizar lista y contador
-      this.previousFlightsCount = newCount;
-      this.handleFlightData(newFlights);
     }
+    this.flights = newData;
+    this.filterFlights(this.currentSearch);
   }
 
   animationState = 'idle'; // Para animaciones de búsqueda
 
   // Cuando recibimos los vuelos, los guardamos y filtramos según la búsqueda
   private handleFlightData(data: Flight[]): void {
-    // Conservar vuelos existentes y agregar nuevos
-    const newFlights = data.filter(newFlight => 
-      !this.flights.some(existingFlight => existingFlight.id === newFlight.id)
-    );
-    
-    this.flights = [...this.flights, ...newFlights];
+    this.flights = data; // Reemplazar completamente la lista
     this.filterFlights(this.currentSearch);
-    
-    if (Date.now() - this.loadStartTime >= 1000) {
-      this.isLoading = false;
-    }
-    
-    this.showRefresh = this.flights.length === 0;
-    this.lastUpdated = new Date();
+    this.isLoading = false;
+    this.clearLoadTimer();
+    this.startPolling(); // Iniciar polling solo después de carga exitosa
   }
 
   // Filtra los vuelos según lo que el usuario ha escrito en la barra de búsqueda
@@ -470,7 +438,7 @@ export class FlightsListComponent implements OnInit, OnDestroy {
       );
       this.searching = false;
       this.showNoResults = this.filteredFlights.length === 0;
-    }, 3000);
+    }, 500);
   }
 
   // Cuando termina una animación, comprobamos si seguimos buscando

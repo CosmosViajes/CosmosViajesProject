@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, Subject, tap } from 'rxjs';
+import { Observable } from 'rxjs';
 import { Flight } from '../models/flight.model';
+
 
 @Injectable({
   providedIn: 'root'
@@ -11,43 +12,12 @@ export class TripService {
 
   constructor(private http: HttpClient) {}
 
-  private flightsUpdated = new Subject<void>();
-
-  notifyFlightsUpdated(): void {
-    this.flightsUpdated.next();
-  }
-
-  // Crear viaje con notificación de actualización
   createTrip(tripData: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/trips`, tripData).pipe(
-      tap({
-        next: () => this.flightsUpdated.next(),
-        error: (err) => console.error('Error creando viaje:', err)
-      })
-    );
-  }
-
-  // Eliminar viaje con notificación de actualización
-  deleteTrip(tripId: number): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/trips/${tripId}`).pipe(
-      tap({
-        next: () => this.flightsUpdated.next(),
-        error: (err) => console.error('Error eliminando viaje:', err)
-      })
-    );
+    return this.http.post(`${this.apiUrl}/trips`, tripData);
   }
 
   getFlights(): Observable<Flight[]> {
-    return this.http.get<Flight[]>(`${this.apiUrl}/flights`).pipe(
-      tap({
-        next: () => this.flightsUpdated.next(),
-        error: (err) => console.error('Error obteniendo vuelos:', err)
-      })
-    );
-  }
-
-  getFlightsUpdates(): Observable<void> {
-    return this.flightsUpdated.asObservable();
+    return this.http.get<Flight[]>(`${this.apiUrl}/flights`);
   }
 
   reserveTrip(data: { user_id: number; trip_id: number }): Observable<any> {
@@ -80,9 +50,12 @@ export class TripService {
     return this.http.post(`${this.apiUrl}/trips/${tripId}/purchase`, {});
   }
 
+  deleteTrip(tripId: number): Observable<any> {
+    console.log(`Viaje ${tripId} eliminado.`);
+    return this.http.delete<any[]>(`${this.apiUrl}/trips/${tripId}`);
+  }
+
   getProviderFlights(providerId: number) {
-    return this.http.get<any[]>(`${this.apiUrl}/providers/${providerId}/flights`).pipe(
-    tap(() => this.notifyFlightsUpdated())
-  );
+    return this.http.get<any[]>(`${this.apiUrl}/providers/${providerId}/flights`);
   }
 }
