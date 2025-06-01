@@ -118,7 +118,6 @@ import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
 .flights-container {
   padding-top: 70px; /* Altura aproximada del menú fijo */
   box-sizing: border-box;
-  height: calc(100vh - 70px); /* Ajustar altura para scroll correcto */
   display: flex;
   flex-direction: column;
 }
@@ -210,9 +209,6 @@ nav.menu {
 }
   
 .flights-list {
-  /* Permite scroll si hay muchas tarjetas */
-  overflow-y: auto;
-  max-height: calc(100vh - 200px); /* Ajusta según la altura de tu cabecera */
   padding-bottom: 2rem;
 }
 
