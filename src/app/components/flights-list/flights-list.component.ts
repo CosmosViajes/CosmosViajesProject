@@ -15,86 +15,91 @@ import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
   imports: [CommonModule, FlightCardComponent, SearchBarComponent, MatIconModule, MatButtonModule],
   template: `
 <section class="flights-container bg-[#04040a] w-full min-h-screen relative overflow-hidden flex flex-col">
-  <!-- Contenido principal -->
-  <div class="flex flex-col h-full">
-    <!-- Estrellas dinámicas -->
-    <div class="stars top-0 left-0 w-full h-full z-[1] pointer-events-none">
-      <div
-        *ngFor="let star of starsArray"
-        class="dynamic-star"
-        [style.top]="star.top"
-        [style.left]="star.left"
-        [style.opacity]="star.opacity"
-      ></div>
+  <!-- Estrellas dinámicas -->
+  <div class="stars top-0 left-0 w-full h-full z-[1] pointer-events-none" style="position: absolute;">
+    <div
+      *ngFor="let star of starsArray"
+      class="dynamic-star"
+      [style.top]="star.top"
+      [style.left]="star.left"
+      [style.opacity]="star.opacity"
+    ></div>
+  </div>
+
+  <!-- Parte Superior SIEMPRE ARRIBA -->
+  <div class="top-section relative flex flex-col items-center justify-center z-[20] px-4 pt-4 mb-[30px]">
+    <h2 class="section-title text-3xl md:text-4xl font-extrabold text-center text-yellow-400 mb-2">
+      PRÓXIMOS VUELOS DISPONIBLES
+    </h2>
+    <div class="search-section relative w-full max-w-4xl">
+      <app-search-bar (searchChange)="filterFlights($event)"></app-search-bar>
     </div>
+  </div>
 
-    <!-- Parte Superior (10vh) -->
-    <div class="top-section relative min-h-[10vh] flex flex-col items-center justify-center z-[20] px-4 pt-4">
-      <!-- Título -->
-      <h2 class="section-title text-3xl md:text-4xl font-extrabold text-center text-yellow-400 mb-2">
-        PRÓXIMOS VUELOS DISPONIBLES
-      </h2>
-
-      <!-- Buscador -->
-      <div class="search-section relative w-full max-w-4xl">
-        <app-search-bar (searchChange)="filterFlights($event)"></app-search-bar>
+  <!-- Notificación de actualización -->
+  <div *ngIf="showUpdateNotification" 
+       @fadeInOut
+       class="fixed bottom-4 right-4 bg-gray-800 text-white p-4 rounded-lg shadow-lg z-[9999]">
+    <div class="flex items-center gap-3">
+      <mat-icon class="text-yellow-500">notifications</mat-icon>
+      <div>
+        <p class="font-medium">¡Nuevos vuelos disponibles!</p>
+        <button (click)="handleManualRefresh()" class="text-yellow-400 hover:text-yellow-300 mt-1">
+          Actualizar lista
+        </button>
       </div>
     </div>
+  </div>
 
-    <!-- Parte Central (80vh) -->
-    <div class="flights-list flex flex-col gap-4 w-full pb-4">
-  @if (isLoading) {
-    <div class="flex justify-center py-12">
-      <div class="animate-pulse flex flex-col items-center gap-4">
-        <div class="h-12 w-12 bg-blue-200 rounded-full"></div>
-        <p class="text-gray-500">Cargando vuelos...</p>
+  <!-- Listado de vuelos o estado de carga -->
+  <div class="flights-list flex flex-col items-center gap-4 w-full pb-4">
+    @if (isLoading) {
+      <div class="flex justify-center py-12 w-full">
+        <div class="animate-pulse flex flex-col items-center gap-4">
+          <div class="h-12 w-12 bg-blue-200 rounded-full"></div>
+          <p class="text-gray-500">Cargando vuelos...</p>
+        </div>
       </div>
-    </div>
-  } @else {
-    <div class="flex flex-col gap-6 w-full">
+    } @else {
       @if (filteredFlights.length > 0) {
         @for (flight of filteredFlights; track flight.id) {
           <app-flight-card
             [flight]="flight"
-            class="w-full border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
+            class="flight-card-custom"
           ></app-flight-card>
         }
       } @else {
-        <div class="w-full py-12 text-center">
-          @if (hasError || flights.length === 0) {
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-            </svg>
-            <h3 class="mt-4 text-lg font-medium text-red-500">
-              @if (hasError) {
-                Error al cargar los vuelos
-              } @else {
-                No hay vuelos disponibles
-              }
-            </h3>
-            <button 
-              (click)="startInitialLoad()"
-              class="mt-4 px-4 py-2 bg-yellow-500 text-black rounded-lg hover:bg-yellow-400 transition-colors"
-            >
-              <div class="flex items-center gap-2">
-                <mat-icon>refresh</mat-icon>
-                Intentar de nuevo
-              </div>
-            </button>
-          }
+        <div class="w-full flex flex-col items-center py-12">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+          <h3 class="mt-4 text-lg font-medium text-red-500">
+            @if (hasError) {
+              Error al cargar los vuelos
+            } @else {
+              No hay vuelos disponibles
+            }
+          </h3>
+          <button 
+            (click)="startInitialLoad()"
+            class="mt-4 px-4 py-2 bg-yellow-500 text-black rounded-lg hover:bg-yellow-400 transition-colors"
+          >
+            <div class="flex items-center gap-2">
+              <mat-icon>refresh</mat-icon>
+              Intentar de nuevo
+            </div>
+          </button>
         </div>
-        }
-      </div>
       }
-    </div>
+    }
+  </div>
 
-    <!-- Estado de actualización automática -->
-    <div *ngIf="lastUpdated" class="text-center text-gray-400 pb-2">
-      Última actualización: {{ lastUpdated | date:'HH:mm:ss' }}
-      <span *ngIf="isCheckingForUpdates" class="ml-2">
-        <mat-icon class="animate-pulse text-sm">autorenew</mat-icon>
-      </span>
-    </div>
+  <!-- Estado de actualización automática -->
+  <div *ngIf="lastUpdated" class="text-center text-gray-400 pb-2">
+    Última actualización: {{ lastUpdated | date:'HH:mm:ss' }}
+    <span *ngIf="isCheckingForUpdates" class="ml-2">
+      <mat-icon class="animate-pulse text-sm">autorenew</mat-icon>
+    </span>
   </div>
 </section>
 `,
