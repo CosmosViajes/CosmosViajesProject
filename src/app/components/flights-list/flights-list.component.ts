@@ -61,7 +61,7 @@ import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
         </div>
       </div>
     } @else {
-      @if (!(filteredFlights.length > 0)) {
+      @if (filteredFlights.length > 0) {
         @for (flight of filteredFlights; track flight.id) {
           <app-flight-card
             [flight]="flight"
@@ -360,19 +360,6 @@ export class FlightsListComponent implements OnInit, OnDestroy {
     });
   }
 
-  private retryLoadWithBackoff(retriesLeft: number, delay: number): void {
-    if (retriesLeft > 0) {
-      setTimeout(() => {
-        console.log(`Reintento de carga (${retriesLeft} restantes)`);
-        this.loadFlights();
-        this.retryLoadWithBackoff(retriesLeft - 1, delay * 2);
-      }, delay);
-    } else {
-      this.handleLoadError(new Error('Falló después de 3 reintentos'));
-    }
-  }
-
-
   // Quitamos el temporizador de carga si ya no hace falta
   private clearLoadTimer(): void {
     if (this.maxLoadTimer) {
@@ -395,7 +382,7 @@ export class FlightsListComponent implements OnInit, OnDestroy {
     if (this.flights.length === 0) {
       setTimeout(() => {
         if (this.isComponentAlive) this.startInitialLoad();
-      }, 1000);
+      }, 100);
     }
   }
 
