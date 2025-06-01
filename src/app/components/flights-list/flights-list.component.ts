@@ -311,7 +311,7 @@ export class FlightsListComponent implements OnInit, OnDestroy {
     // Temporizador mínimo de 3 segundo
     this.minLoadTimer = setTimeout(() => {
       this.isLoading = false;
-    }, 5000);
+    }, 10000);
 
     // Temporizador máximo de 10 segundos para errores
     this.maxLoadTimer = setTimeout(() => {
@@ -319,7 +319,7 @@ export class FlightsListComponent implements OnInit, OnDestroy {
         this.hasError = true;
         this.isLoading = false;
       }
-    }, 10000);
+    }, 25000);
 
     this.loadFlights();
     this.startPolling();
