@@ -52,7 +52,7 @@ import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
   </div>
 
   <!-- Listado de vuelos o estado de carga -->
-  <div class="flights-list flex flex-col items-center gap-4 w-full pb-4">
+    <div class="flights-list flex flex-col items-center gap-6 w-full pb-4 overflow-y-auto" style="max-height: 100vh;">
     @if (isLoading) {
       <div class="flex justify-center py-12 w-full">
         <div class="animate-pulse flex flex-col items-center gap-4">
@@ -65,7 +65,7 @@ import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
         @for (flight of filteredFlights; track flight.id) {
           <app-flight-card
             [flight]="flight"
-            class="flight-card-custom"
+            class="flight-card-responsive"
           ></app-flight-card>
         }
       } @else {
