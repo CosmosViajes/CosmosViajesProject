@@ -52,7 +52,7 @@ import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
 
   <!-- Listado de vuelos o estado de carga -->
   <div class="flights-list w-full flex justify-center pb-4">
-    <div class="grid grid-cols-1 gap-8 w-full max-w-6xl px-2">
+  <div class="grid grid-cols-1 gap-8 w-full max-w-6xl px-2">
     @if (isLoading) {
       <div class="col-span-full flex justify-center py-12">
         <div class="animate-pulse flex flex-col items-center gap-4">
@@ -61,33 +61,17 @@ import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
         </div>
       </div>
     } @else {
-      @if (filteredFlights.length > 0) {
-        @for (flight of filteredFlights; track flight.id) {
-          <app-flight-card
-            [flight]="flight"
-            class="flight-card-grid"
-          ></app-flight-card>
-        }
-      } @else {
+      @if (hasError) {
         <div class="col-span-full flex flex-col items-center py-12">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
           </svg>
-          <h3 class="mt-4 text-lg font-medium text-red-500">
-            @if (hasError) {
-              <div class="col-span-full flex flex-col items-center py-12">
-                <mat-icon class="text-red-500 text-4xl mb-4">error_outline</mat-icon>
-                <h3 class="text-lg font-medium text-red-500 mb-2">
-                  Error de conexión con el servidor
-                </h3>
-                <p class="text-gray-400 text-sm mb-4">
-                  Intentando reconectar automáticamente...
-                </p>
-              </div>
-            } @else {
-              No hay vuelos disponibles
-            }
+          <h3 class="mt-4 text-lg font-medium text-red-500 mb-2">
+            Error de conexión con el servidor
           </h3>
+          <p class="text-gray-400 text-sm mb-4">
+            Intentando reconectar automáticamente...
+          </p>
           <button 
             (click)="startInitialLoad()"
             class="mt-4 px-4 py-2 bg-yellow-500 text-black rounded-lg hover:bg-yellow-400 transition-colors"
@@ -98,10 +82,28 @@ import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
             </div>
           </button>
         </div>
+      } @else {
+        @if (filteredFlights.length > 0) {
+          @for (flight of filteredFlights; track flight.id) {
+            <app-flight-card
+              [flight]="flight"
+              class="flight-card-grid"
+            ></app-flight-card>
+          }
+        } @else {
+          <div class="col-span-full flex flex-col items-center py-12">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <h3 class="mt-4 text-lg font-medium text-gray-600">
+              No hay vuelos disponibles
+            </h3>
+          </div>
+        }
       }
     }
-    </div>
   </div>
+</div>
 
   <!-- Estado de actualización automática -->
   <div *ngIf="lastUpdated" class="text-center text-gray-400 pb-2">
@@ -323,12 +325,12 @@ export class FlightsListComponent implements OnInit, OnDestroy {
     this.filteredFlights = [];
     this.clearLoadTimer();
 
-    // Temporizador más corto para desarrollo (5s)
+    // Temporizador más corto para desarrollo (15s)
     this.maxLoadTimer = setTimeout(() => {
       if (this.isLoading) {
         this.handleLoadError(new Error('Timeout'), true); // Forzar error solo si sigue loading
       }
-    }, 5000);
+    }, 15000);
 
     this.loadFlights();
   }
@@ -364,7 +366,7 @@ export class FlightsListComponent implements OnInit, OnDestroy {
   private clearLoadTimer(): void {
     if (this.maxLoadTimer) {
       clearTimeout(this.maxLoadTimer);
-      this.maxLoadTimer = null;
+      this.maxLoadTimer = null; // <-- Importante resetear la referencia
     }
   }
 
@@ -374,15 +376,10 @@ export class FlightsListComponent implements OnInit, OnDestroy {
     if (isTimeout && this.flights.length === 0) {
       this.hasError = true;
     }
-    
     this.isLoading = false;
-    this.cdr.detectChanges(); // Forzar actualización de vista
 
-    // Reintentar después de 1s solo si no hay datos
-    if (this.flights.length === 0) {
-      setTimeout(() => {
-        if (this.isComponentAlive) this.startInitialLoad();
-      }, 100);
+    if (this.isComponentAlive && this.flights.length === 0) {
+      setTimeout(() => this.startInitialLoad(), 3000);
     }
   }
 
