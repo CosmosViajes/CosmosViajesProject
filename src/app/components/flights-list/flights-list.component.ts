@@ -315,7 +315,7 @@ export class FlightsListComponent implements OnInit, OnDestroy {
   }
 
   // Carga inicial de los vuelos
-  private startInitialLoad(): void {
+  public startInitialLoad(): void {
     this.isLoading = true;
     this.hasError = false;
     this.flights = [];
