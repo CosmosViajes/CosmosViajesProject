@@ -61,7 +61,7 @@ import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
         </div>
       </div>
     } @else {
-      @if (filteredFlights.length > 0) {
+      @if (!filteredFlights.length > 0) {
         @for (flight of filteredFlights; track flight.id) {
           <app-flight-card
             [flight]="flight"
