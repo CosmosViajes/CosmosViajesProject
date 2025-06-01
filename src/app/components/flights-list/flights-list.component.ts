@@ -330,7 +330,7 @@ export class FlightsListComponent implements OnInit, OnDestroy {
       if (this.isLoading) {
         this.handleLoadError(new Error('Tiempo de espera agotado'));
       }
-    }, 10000);
+    }, 15000);
 
     this.loadFlights();
   }
@@ -391,7 +391,7 @@ export class FlightsListComponent implements OnInit, OnDestroy {
       if (this.isComponentAlive && !this.flights.length) {
         this.startInitialLoad();
       }
-    }, 2000);
+    }, 3000);
   }
 
   // Cada 10 segundos, pedimos los vuelos al servidor para ver si hay cambios
