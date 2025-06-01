@@ -307,10 +307,10 @@ export class FlightsListComponent implements OnInit, OnDestroy {
     this.hasError = false;
     this.loadStartTime = Date.now();
     
-    // Temporizador mínimo de 1 segundo
+    // Temporizador mínimo de 3 segundo
     this.minLoadTimer = setTimeout(() => {
       this.isLoading = false;
-    }, 1000);
+    }, 3000);
 
     // Temporizador máximo de 10 segundos para errores
     this.maxLoadTimer = setTimeout(() => {
