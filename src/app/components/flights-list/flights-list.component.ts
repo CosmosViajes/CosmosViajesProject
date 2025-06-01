@@ -42,68 +42,50 @@ import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
     </div>
 
     <!-- Parte Central (80vh) -->
-    <div class="middle-section relative min-h-[80vh] flex-1 z-[30] overflow-y-auto px-4 md:px-8" style="margin-top: 25px;">
-      <!-- Notificación de actualización -->
-      <div *ngIf="showUpdateNotification" 
-          @fadeInOut
-          class="fixed bottom-4 right-4 bg-gray-800 text-white p-4 rounded-lg shadow-lg z-[9999]">
-        <div class="flex items-center gap-3">
-          <mat-icon class="text-yellow-500">notifications</mat-icon>
-          <div>
-            <p class="font-medium">¡Nuevos vuelos disponibles!</p>
-            <button (click)="handleManualRefresh()" class="text-yellow-400 hover:text-yellow-300 mt-1">
-              Actualizar lista
-            </button>
-          </div>
-        </div>
+    <div class="flights-list flex flex-col gap-4 w-full pb-4">
+  @if (isLoading) {
+    <div class="flex justify-center py-12">
+      <div class="animate-pulse flex flex-col items-center gap-4">
+        <div class="h-12 w-12 bg-blue-200 rounded-full"></div>
+        <p class="text-gray-500">Cargando vuelos...</p>
       </div>
-
-      <!-- Listado de vuelos -->
-      <div class="flights-list flex flex-col gap-4 w-full pb-4">
-        @if (isLoading) {
-          <div class="flex justify-center py-12">
-            <div class="animate-pulse flex flex-col items-center gap-4">
-              <div class="h-12 w-12 bg-blue-200 rounded-full"></div>
-              <p class="text-gray-500">Cargando vuelos...</p>
-            </div>
-          </div>
-        } @else {
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
-            @if (filteredFlights.length > 0) {
-              @for (flight of filteredFlights; track flight.id) {
-                <app-flight-card
-                  [flight]="flight"
-                  class="w-full border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
-                ></app-flight-card>
+    </div>
+  } @else {
+    <div class="flex flex-col gap-6 w-full">
+      @if (filteredFlights.length > 0) {
+        @for (flight of filteredFlights; track flight.id) {
+          <app-flight-card
+            [flight]="flight"
+            class="w-full border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
+          ></app-flight-card>
+        }
+      } @else {
+        <div class="w-full py-12 text-center">
+          @if (hasError || flights.length === 0) {
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            <h3 class="mt-4 text-lg font-medium text-red-500">
+              @if (hasError) {
+                Error al cargar los vuelos
+              } @else {
+                No hay vuelos disponibles
               }
-            } @else {
-              <div class="col-span-full py-12 text-center">
-                @if (hasError || flights.length === 0) {
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                  </svg>
-                  <h3 class="mt-4 text-lg font-medium text-red-500">
-                    @if (hasError) {
-                      Error al cargar los vuelos
-                    } @else {
-                      No hay vuelos disponibles
-                    }
-                  </h3>
-                  <button 
-                    (click)="startInitialLoad()"
-                    class="mt-4 px-4 py-2 bg-yellow-500 text-black rounded-lg hover:bg-yellow-400 transition-colors"
-                  >
-                    <div class="flex items-center gap-2">
-                      <mat-icon>refresh</mat-icon>
-                      Intentar de nuevo
-                    </div>
-                  </button>
-                }
+            </h3>
+            <button 
+              (click)="startInitialLoad()"
+              class="mt-4 px-4 py-2 bg-yellow-500 text-black rounded-lg hover:bg-yellow-400 transition-colors"
+            >
+              <div class="flex items-center gap-2">
+                <mat-icon>refresh</mat-icon>
+                Intentar de nuevo
               </div>
-            }
-          </div>
+            </button>
+          }
+        </div>
         }
       </div>
+      }
     </div>
 
     <!-- Estado de actualización automática -->
@@ -298,7 +280,7 @@ export class FlightsListComponent implements OnInit, OnDestroy {
     // Siempre mostramos el "cargando" al menos 2 segundos para que no parpadee
     this.loadTimer = setTimeout(() => {
       this.isLoading = false;
-    }, 10000);
+    }, 5000);
 
     this.loadFlights(); // Pedimos los vuelos al servidor
     this.startPolling(); // Empezamos a mirar si hay vuelos nuevos cada cierto tiempo
@@ -346,6 +328,7 @@ export class FlightsListComponent implements OnInit, OnDestroy {
     this.flights = [];
     this.filteredFlights = [];
     this.initialLoad = false;
+    this.clearLoadTimer();
   }
 
   // Cada 10 segundos, pedimos los vuelos al servidor para ver si hay cambios
