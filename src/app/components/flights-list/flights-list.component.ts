@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy  } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FlightCardComponent } from '../flight-card/flight-card.component';
 import { SearchBarComponent } from '../search-bar/search-bar.component';
@@ -75,7 +75,7 @@ import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
           </svg>
           <h3 class="mt-4 text-lg font-medium text-red-500">
             @if (hasError) {
-              <div class="col-span-full flex flex-col items-center py-12 animate-fade-in">
+              <div class="col-span-full flex flex-col items-center py-12">
                 <mat-icon class="text-red-500 text-4xl mb-4">error_outline</mat-icon>
                 <h3 class="text-lg font-medium text-red-500 mb-2">
                   Error de conexión con el servidor
@@ -264,7 +264,7 @@ export class FlightsListComponent implements OnInit, OnDestroy {
   loadTimer: any; // Temporizador para la carga inicial
   currentSearch = ''; // Lo que el usuario ha escrito en la barra de búsqueda
 
-  constructor(private tripService: TripService) {}
+  constructor(private tripService: TripService, private cdr: ChangeDetectorRef) {}
 
   private loadFlightsSubscription?: Subscription;
 
@@ -316,21 +316,23 @@ export class FlightsListComponent implements OnInit, OnDestroy {
 
   // Carga inicial de los vuelos
   public startInitialLoad(): void {
+    // Resetear estados completamente
     this.isLoading = true;
     this.hasError = false;
     this.flights = [];
     this.filteredFlights = [];
     this.clearLoadTimer();
 
-    // Temporizador de 15 segundos para error
+    // Temporizador más corto para desarrollo (5s)
     this.maxLoadTimer = setTimeout(() => {
       if (this.isLoading) {
-        this.handleLoadError(new Error('Tiempo de espera agotado'));
+        this.handleLoadError(new Error('Timeout'), true); // Forzar error solo si sigue loading
       }
-    }, 15000);
+    }, 5000);
 
     this.loadFlights();
   }
+
 
   // Si el usuario pulsa refrescar, volvemos a cargar los vuelos
   handleManualRefresh(): void {
@@ -380,17 +382,20 @@ export class FlightsListComponent implements OnInit, OnDestroy {
   }
 
   // Si hay error cargando los vuelos, lo mostramos y vaciamos las listas
-  private handleLoadError(err: any): void {
-    // Solo marcar error si no hay vuelos y el componente está activo
-    if (this.flights.length === 0 && this.isComponentAlive) {
+  private handleLoadError(err: any, isTimeout: boolean = false): void {
+    // Solo marcar error si es timeout y no hay vuelos
+    if (isTimeout && this.flights.length === 0) {
       this.hasError = true;
     }
     
     this.isLoading = false;
+    this.cdr.detectChanges(); // Forzar actualización de vista
 
-    // Reintentar después de 3 segundos solo si no hay datos
-    if (this.flights.length === 0 && this.isComponentAlive) {
-      setTimeout(() => this.startInitialLoad(), 3000);
+    // Reintentar después de 1s solo si no hay datos
+    if (this.flights.length === 0) {
+      setTimeout(() => {
+        if (this.isComponentAlive) this.startInitialLoad();
+      }, 1000);
     }
   }
 
@@ -423,17 +428,20 @@ export class FlightsListComponent implements OnInit, OnDestroy {
   animationState = 'idle'; // Para animaciones de búsqueda
 
   // Cuando recibimos los vuelos, los guardamos y filtramos según la búsqueda
-  private handleFlightData(data: Flight[]): void {
-    // 1. Limpiar temporizador primero
+  public handleFlightData(data: Flight[]): void {
+    // 1. Limpiar temporizador PRIMERO (esto es crítico)
     this.clearLoadTimer();
 
-    // 2. Actualizar estados y datos
+    // 2. Actualizar estados Y DATOS de forma atómica
     this.hasError = false;
     this.isLoading = false;
     this.flights = data;
     this.filterFlights(this.currentSearch);
 
-    // 3. Si es la primera carga, iniciar polling
+    // 3. Forzar detección de cambios inmediata
+    this.cdr.detectChanges(); // Necesitarás inyectar ChangeDetectorRef en el constructor
+
+    // 4. Iniciar polling solo si es la primera carga
     if (this.initialLoad) {
       this.startPolling();
       this.initialLoad = false;
