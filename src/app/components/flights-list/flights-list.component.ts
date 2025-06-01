@@ -188,14 +188,32 @@ nav.menu {
   z-index: 1000;
 }
 
-.animate-spin {
-  animation: spin 1.5s linear infinite;
+.flight-card-responsive {
+  width: 95%;
+  max-width: 900px;
+  min-width: 320px;
+  margin: 10px auto;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  background: #161622;
+  transition: box-shadow 0.2s, transform 0.2s;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.flight-card-responsive:hover {
+  box-shadow: 0 4px 20px rgba(252, 242, 100, 0.15);
+  transform: translateY(-4px) scale(1.01);
 }
+  
+.flights-list {
+  /* Permite scroll si hay muchas tarjetas */
+  overflow-y: auto;
+  max-height: calc(100vh - 200px); /* Ajusta según la altura de tu cabecera */
+  padding-bottom: 2rem;
+}
+
 
 .shadow-lg {
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
