@@ -377,10 +377,6 @@ export class FlightsListComponent implements OnInit, OnDestroy {
   // Quitamos el temporizador de carga si ya no hace falta
   private clearLoadTimer(): void {
     // Limpiar ambos temporizadores de forma agresiva
-    if (this.minLoadTimer) {
-      clearTimeout(this.minLoadTimer);
-      this.minLoadTimer = null;
-    }
     if (this.maxLoadTimer) {
       clearTimeout(this.maxLoadTimer);
       this.maxLoadTimer = null;
@@ -389,22 +385,16 @@ export class FlightsListComponent implements OnInit, OnDestroy {
 
   // Si hay error cargando los vuelos, lo mostramos y vaciamos las listas
   private handleLoadError(err: any): void {
-    console.error('Error:', err);
-    
-    // Solo marcar error si NO hay vuelos cargados
-    if (this.flights.length === 0) {
+    // Solo marcar error si NO hay vuelos y el componente sigue activo
+    if (this.flights.length === 0 && this.isComponentAlive) {
       this.hasError = true;
     }
     
     this.isLoading = false;
 
-    // Reintentar solo si no hay datos
-    if (this.flights.length === 0) {
-      setTimeout(() => {
-        if (this.isComponentAlive) {
-          this.startInitialLoad();
-        }
-      }, 2000);
+    // Reintentar solo si no hay datos y el componente está activo
+    if (this.flights.length === 0 && this.isComponentAlive) {
+      setTimeout(() => this.startInitialLoad(), 2000);
     }
   }
 
@@ -438,16 +428,18 @@ export class FlightsListComponent implements OnInit, OnDestroy {
 
   // Cuando recibimos los vuelos, los guardamos y filtramos según la búsqueda
   private handleFlightData(data: Flight[]): void {
-    // Primero: limpiar temporizadores y resetear estados
+    // 1. Limpiar temporizadores PRIMERO
     this.clearLoadTimer();
+
+    // 2. Actualizar estados
     this.hasError = false;
     this.isLoading = false;
-
-    // Luego procesar datos
+    
+    // 3. Procesar datos
     this.flights = data;
     this.filterFlights(this.currentSearch);
 
-    // Finalmente iniciar polling si es necesario
+    // 4. Iniciar polling solo si es la primera carga
     if (this.initialLoad) {
       this.startPolling();
       this.initialLoad = false;
