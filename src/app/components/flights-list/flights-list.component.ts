@@ -252,7 +252,6 @@ export class FlightsListComponent implements OnInit, OnDestroy {
   lastUpdated?: Date; // Fecha de la última actualización de la lista
   isCheckingForUpdates = false; // Si estamos comprobando si hay vuelos nuevos
 
-  private minLoadTimer: any;
   private maxLoadTimer: any;
 
   hasError = false; // Si hay un error cargando los vuelos
@@ -316,16 +315,14 @@ export class FlightsListComponent implements OnInit, OnDestroy {
   }
 
   // Carga inicial de los vuelos
-  public startInitialLoad(): void {
+  private startInitialLoad(): void {
     this.isLoading = true;
     this.hasError = false;
     this.flights = [];
     this.filteredFlights = [];
-
-    // Limpiar cualquier temporizador previo
     this.clearLoadTimer();
 
-    // Temporizador máximo de 10 segundos
+    // Temporizador de 15 segundos para error
     this.maxLoadTimer = setTimeout(() => {
       if (this.isLoading) {
         this.handleLoadError(new Error('Tiempo de espera agotado'));
@@ -376,7 +373,6 @@ export class FlightsListComponent implements OnInit, OnDestroy {
 
   // Quitamos el temporizador de carga si ya no hace falta
   private clearLoadTimer(): void {
-    // Limpiar ambos temporizadores de forma agresiva
     if (this.maxLoadTimer) {
       clearTimeout(this.maxLoadTimer);
       this.maxLoadTimer = null;
@@ -385,16 +381,16 @@ export class FlightsListComponent implements OnInit, OnDestroy {
 
   // Si hay error cargando los vuelos, lo mostramos y vaciamos las listas
   private handleLoadError(err: any): void {
-    // Solo marcar error si NO hay vuelos y el componente sigue activo
+    // Solo marcar error si no hay vuelos y el componente está activo
     if (this.flights.length === 0 && this.isComponentAlive) {
       this.hasError = true;
     }
     
     this.isLoading = false;
 
-    // Reintentar solo si no hay datos y el componente está activo
+    // Reintentar después de 3 segundos solo si no hay datos
     if (this.flights.length === 0 && this.isComponentAlive) {
-      setTimeout(() => this.startInitialLoad(), 2000);
+      setTimeout(() => this.startInitialLoad(), 3000);
     }
   }
 
@@ -428,18 +424,16 @@ export class FlightsListComponent implements OnInit, OnDestroy {
 
   // Cuando recibimos los vuelos, los guardamos y filtramos según la búsqueda
   private handleFlightData(data: Flight[]): void {
-    // 1. Limpiar temporizadores PRIMERO
+    // 1. Limpiar temporizador primero
     this.clearLoadTimer();
 
-    // 2. Actualizar estados
+    // 2. Actualizar estados y datos
     this.hasError = false;
     this.isLoading = false;
-    
-    // 3. Procesar datos
     this.flights = data;
     this.filterFlights(this.currentSearch);
 
-    // 4. Iniciar polling solo si es la primera carga
+    // 3. Si es la primera carga, iniciar polling
     if (this.initialLoad) {
       this.startPolling();
       this.initialLoad = false;
