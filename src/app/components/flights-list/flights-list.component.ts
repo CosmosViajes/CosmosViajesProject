@@ -7,7 +7,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { TripService } from '../../services/trip.service';
 import { Flight } from '../../models/flight.model';
 import { timer, Subscription } from 'rxjs';
-import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
+import { switchMap, takeWhile, distinctUntilChanged, filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-flights-list',
@@ -38,14 +38,13 @@ import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
 
   <!-- Notificación de actualización -->
   <div *ngIf="showUpdateNotification" 
-       @fadeInOut
-       class="fixed bottom-4 right-4 bg-gray-800 text-white p-4 rounded-lg shadow-lg z-[9999]">
+     class="fixed bottom-4 right-4 bg-green-500 text-white p-4 rounded-lg shadow-lg z-[9999] animate-fade-in">
     <div class="flex items-center gap-3">
-      <mat-icon class="text-yellow-500">notifications</mat-icon>
+      <mat-icon>flight_takeoff</mat-icon>
       <div>
         <p class="font-medium">¡Nuevos vuelos disponibles!</p>
-        <button (click)="handleManualRefresh()" class="text-yellow-400 hover:text-yellow-300 mt-1">
-          Actualizar lista
+        <button (click)="applyUpdates()" class="text-white hover:text-gray-200 mt-1">
+          Mostrar ahora
         </button>
       </div>
     </div>
@@ -221,6 +220,15 @@ nav.menu {
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
 `],
 })
 export class FlightsListComponent implements OnInit, OnDestroy {
@@ -250,6 +258,8 @@ export class FlightsListComponent implements OnInit, OnDestroy {
   initialLoad = true; // Si es la primera vez que cargamos los vuelos
   loadTimer: any; // Temporizador para la carga inicial
   currentSearch = ''; // Lo que el usuario ha escrito en la barra de búsqueda
+
+  private flightsSubscription?: Subscription;
 
   constructor(private tripService: TripService) {}
 
@@ -293,36 +303,29 @@ export class FlightsListComponent implements OnInit, OnDestroy {
 
   // Cuando se inicia el componente
   ngOnInit(): void {
-    this.startInitialLoad(); // Cargamos los vuelos por primera vez
-    this.generateStars(); // Dibujamos las estrellas
+    this.generateStars();
+    this.setupFlightUpdates();
+    this.startInitialLoad();
+    
+    setInterval(() => this.updateRandomStars(), 1500);
+  }
 
-    // Cada poco tiempo, cambiamos algunas estrellas para que el fondo se vea animado
-    setInterval(() => {
-      this.updateRandomStars();
-    }, Math.random() * (1000 - 500) + 500);
+  private setupFlightUpdates(): void {
+    this.flightsSubscription = this.tripService.getFlightsUpdates().pipe(
+      filter(() => !this.isLoading)
+    ).subscribe(() => {
+      this.loadFlights();
+    });
   }
 
   // Carga inicial de los vuelos
   public startInitialLoad(): void {
     this.isLoading = true;
     this.hasError = false;
-    this.loadStartTime = Date.now();
-    
-    // Temporizador mínimo de 3 segundo
-    this.minLoadTimer = setTimeout(() => {
-      this.isLoading = false;
-    }, 10000);
-
-    // Temporizador máximo de 10 segundos para errores
-    this.maxLoadTimer = setTimeout(() => {
-      if (this.isLoading) {
-        this.hasError = true;
-        this.isLoading = false;
-      }
-    }, 25000);
+    this.flights = [];
+    this.filteredFlights = [];
 
     this.loadFlights();
-    this.startPolling();
   }
 
   // Si el usuario pulsa refrescar, volvemos a cargar los vuelos
@@ -334,26 +337,39 @@ export class FlightsListComponent implements OnInit, OnDestroy {
   // Cuando se destruye el componente, paramos los temporizadores y actualizaciones
   ngOnDestroy(): void {
     this.isComponentAlive = false;
+    this.flightsSubscription?.unsubscribe();
     this.pollingSubscription?.unsubscribe();
-    if (this.searchTimer) clearTimeout(this.searchTimer);
+    this.clearLoadTimers();
   }
 
   // Pedimos la lista de vuelos al servidor
-  loadFlights(): void {
+  private loadFlights(): void {
     this.tripService.getFlights().subscribe({
       next: (data) => {
-        this.handleFlightData(data); // Si va bien, guardamos los vuelos
-        this.clearLoadTimer();
+        this.handleFlightData(data);
+        this.clearLoadTimers();
       },
       error: (err) => {
-        this.handleLoadError(err); // Si hay error, lo mostramos
-        this.clearLoadTimer();
+        this.handleLoadError(err);
+        this.retryLoadWithBackoff();
       }
     });
   }
 
+  private retryLoadWithBackoff(retries = 3, delay = 1000): void {
+    if (retries > 0) {
+      setTimeout(() => {
+        console.log(`Reintentando carga (intentos restantes: ${retries})`);
+        this.loadFlights();
+        this.retryLoadWithBackoff(retries - 1, delay * 2);
+      }, delay);
+    } else {
+      this.handleLoadError(new Error('Máximo de reintentos alcanzado'));
+    }
+  }
+
   // Quitamos el temporizador de carga si ya no hace falta
-  private clearLoadTimer(): void {
+  private clearLoadTimers(): void {
     clearTimeout(this.minLoadTimer);
     clearTimeout(this.maxLoadTimer);
   }
@@ -365,7 +381,7 @@ export class FlightsListComponent implements OnInit, OnDestroy {
     this.flights = [];
     this.filteredFlights = [];
     this.initialLoad = false;
-    this.clearLoadTimer();
+    this.clearLoadTimers();
   }
 
   // Cada 10 segundos, pedimos los vuelos al servidor para ver si hay cambios
@@ -464,17 +480,9 @@ export class FlightsListComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Comprueba si han cambiado los vuelos (añadidos o quitados)
-  private checkForFlightChanges(newFlights: Flight[]): void {
-    const currentIds = this.flights.map(f => f.id);
-    const newIds = newFlights.map(f => f.id);
-    
-    const added = newFlights.filter(f => !currentIds.includes(f.id));
-    const removed = this.flights.filter(f => !newIds.includes(f.id));
-
-    if (added.length > 0 || removed.length > 0) {
-      this.showUpdateNotification = true;
-      setTimeout(() => this.showUpdateNotification = false, 5000);
-    }
+  public applyUpdates(): void {
+    this.filterFlights(this.currentSearch);
+    this.showUpdateNotification = false;
   }
+
 }
