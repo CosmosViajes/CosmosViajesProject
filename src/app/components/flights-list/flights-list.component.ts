@@ -6,7 +6,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { TripService } from '../../services/trip.service';
 import { Flight } from '../../models/flight.model';
-import { trigger, state, style, transition, animate } from '@angular/animations';
 import { timer, Subscription } from 'rxjs';
 import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
 
@@ -14,28 +13,10 @@ import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
   selector: 'app-flights-list',
   standalone: true,
   imports: [CommonModule, FlightCardComponent, SearchBarComponent, MatIconModule, MatButtonModule],
-  animations: [
-    trigger('spin', [
-      state('searching', style({ transform: 'rotate(0deg)' })),
-      state('idle', style({ transform: 'rotate(360deg)' })),
-      transition('searching => idle', animate('2000ms linear'))
-    ]),
-    trigger('fadeInOut', [
-      transition(':enter', [
-        style({ opacity: 0, transform: 'translateY(20px)' }),
-        animate('300ms ease-out', 
-          style({ opacity: 1, transform: 'translateY(0)' }))
-      ]),
-      transition(':leave', [
-        animate('200ms ease-in', 
-          style({ opacity: 0, transform: 'translateY(20px)' }))
-      ])
-    ])
-  ],
   template: `
 <section class="flights-container bg-[#04040a] w-full min-h-screen relative overflow-hidden flex flex-col">
   <!-- Contenido principal -->
-  <div *ngIf="!isLoading" class="flex flex-col h-full">
+  <div class="flex flex-col h-full">
     <!-- Estrellas dinámicas -->
     <div class="stars top-0 left-0 w-full h-full z-[1] pointer-events-none">
       <div
@@ -62,50 +43,58 @@ import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
 
     <!-- Parte Central (80vh) -->
     <div class="middle-section relative min-h-[80vh] flex-1 z-[30] overflow-y-auto px-4 md:px-8" style="margin-top: 25px;">
-      <!-- Notificación de actualización -->
-      <div *ngIf="showUpdateNotification" 
-           @fadeInOut
-           class="fixed bottom-4 right-4 bg-gray-800 text-white p-4 rounded-lg shadow-lg z-[9999]">
-        <div class="flex items-center gap-3">
-          <mat-icon class="text-yellow-500">notifications</mat-icon>
-          <div>
-            <p class="font-medium">¡Nuevos vuelos disponibles!</p>
-            <button (click)="handleManualRefresh()" class="text-yellow-400 hover:text-yellow-300 mt-1">
-              Actualizar lista
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Listado de vuelos -->
-      <div class="flights-list flex flex-col gap-4 w-full pb-4">
-        <ng-container *ngIf="filteredFlights.length > 0; else noResults">
-          <app-flight-card
-            *ngFor="let flight of filteredFlights"
-            [flight]="flight"
-            class="w-full"
-          ></app-flight-card>
-        </ng-container>
-
-        <ng-template #noResults>
-          <div class="no-results flex flex-col items-center justify-center text-center text-yellow-400 h-full py-8">
-            <div *ngIf="searching" class="mb-6 flex flex-col items-center">
-              <svg class="w-16 h-16 text-yellow-500 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-              </svg>
-              <p class="text-xl md:text-2xl font-medium text-gray-300 mt-2">Buscando vuelos...</p>
-            </div>
-
-            <div *ngIf="!searching && showNoResults">
-              <p class="text-xl md:text-2xl font-medium text-gray-300">
-                No se encontraron vuelos que coincidan con "{{ currentSearch }}"
-              </p>
-            </div>
-          </div>
-        </ng-template>
+  <!-- Notificación de actualización -->
+  <div *ngIf="showUpdateNotification" 
+       @fadeInOut
+       class="fixed bottom-4 right-4 bg-gray-800 text-white p-4 rounded-lg shadow-lg z-[9999]">
+    <div class="flex items-center gap-3">
+      <mat-icon class="text-yellow-500">notifications</mat-icon>
+      <div>
+        <p class="font-medium">¡Nuevos vuelos disponibles!</p>
+        <button (click)="handleManualRefresh()" class="text-yellow-400 hover:text-yellow-300 mt-1">
+          Actualizar lista
+        </button>
       </div>
     </div>
+  </div>
+
+  <!-- Listado de vuelos -->
+  <div class="flights-list flex flex-col gap-4 w-full pb-4">
+    @if (isLoading) {
+      <div class="flex justify-center py-12">
+        <div class="animate-pulse flex flex-col items-center gap-4">
+          <div class="h-12 w-12 bg-blue-200 rounded-full"></div>
+          <p class="text-gray-500">Cargando vuelos...</p>
+        </div>
+      </div>
+    } @else {
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
+        @if (filteredFlights.length > 0) {
+          @for (flight of filteredFlights; track flight.id) {
+            <app-flight-card
+              [flight]="flight"
+              class="w-full border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
+            ></app-flight-card>
+          }
+        } @else {
+          <div class="col-span-full py-12 text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 class="mt-4 text-lg font-medium text-gray-600">No se encontraron vuelos</h3>
+            <p class="mt-1 text-gray-500">
+              @if (currentSearch) {
+                No hay resultados para "{{ currentSearch }}"
+              } @else {
+                Actualmente no hay vuelos disponibles
+              }
+            </p>
+          </div>
+        }
+      </div>
+    }
+    </div>
+  </div>
 
     <!-- Estado de actualización automática -->
     <div *ngIf="lastUpdated" class="text-center text-gray-400 pb-2">
