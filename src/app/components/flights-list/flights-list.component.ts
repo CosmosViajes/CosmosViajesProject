@@ -53,7 +53,7 @@ import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
 
   <!-- Listado de vuelos o estado de carga -->
   <div class="flights-list w-full flex justify-center pb-4">
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-6xl px-2">
+    <div class="grid grid-cols-1 gap-8 w-full max-w-6xl px-2">
     @if (isLoading) {
       <div class="col-span-full flex justify-center py-12">
         <div class="animate-pulse flex flex-col items-center gap-4">
@@ -204,7 +204,7 @@ nav.menu {
   transition: box-shadow 0.2s, transform 0.2s;
 }
 
-.flight-card-responsive:hover {
+.flight-card-grid:hover {
   box-shadow: 0 4px 20px rgba(252, 242, 100, 0.15);
   transform: translateY(-4px) scale(1.01);
 }
