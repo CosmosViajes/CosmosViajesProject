@@ -376,22 +376,36 @@ export class FlightsListComponent implements OnInit, OnDestroy {
 
   // Quitamos el temporizador de carga si ya no hace falta
   private clearLoadTimer(): void {
-    clearTimeout(this.minLoadTimer);
-    clearTimeout(this.maxLoadTimer);
+    // Limpiar ambos temporizadores de forma agresiva
+    if (this.minLoadTimer) {
+      clearTimeout(this.minLoadTimer);
+      this.minLoadTimer = null;
+    }
+    if (this.maxLoadTimer) {
+      clearTimeout(this.maxLoadTimer);
+      this.maxLoadTimer = null;
+    }
   }
 
   // Si hay error cargando los vuelos, lo mostramos y vaciamos las listas
   private handleLoadError(err: any): void {
     console.error('Error:', err);
-    this.isLoading = false;
-    this.hasError = true;
     
-    // Auto-reintento después de 2 segundos
-    setTimeout(() => {
-      if (this.isComponentAlive && !this.flights.length) {
-        this.startInitialLoad();
-      }
-    }, 15000);
+    // Solo marcar error si NO hay vuelos cargados
+    if (this.flights.length === 0) {
+      this.hasError = true;
+    }
+    
+    this.isLoading = false;
+
+    // Reintentar solo si no hay datos
+    if (this.flights.length === 0) {
+      setTimeout(() => {
+        if (this.isComponentAlive) {
+          this.startInitialLoad();
+        }
+      }, 2000);
+    }
   }
 
   // Cada 10 segundos, pedimos los vuelos al servidor para ver si hay cambios
@@ -424,15 +438,16 @@ export class FlightsListComponent implements OnInit, OnDestroy {
 
   // Cuando recibimos los vuelos, los guardamos y filtramos según la búsqueda
   private handleFlightData(data: Flight[]): void {
-    // Cancelar el temporizador de error si los datos llegan
+    // Primero: limpiar temporizadores y resetear estados
     this.clearLoadTimer();
-    
     this.hasError = false;
-    this.flights = data;
-    this.filterFlights(this.currentSearch);
     this.isLoading = false;
 
-    // Iniciar polling solo si es la primera carga
+    // Luego procesar datos
+    this.flights = data;
+    this.filterFlights(this.currentSearch);
+
+    // Finalmente iniciar polling si es necesario
     if (this.initialLoad) {
       this.startPolling();
       this.initialLoad = false;
