@@ -52,9 +52,10 @@ import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
   </div>
 
   <!-- Listado de vuelos o estado de carga -->
-    <div class="flights-list flex flex-col items-center gap-6 w-full pb-4 overflow-y-auto" style="max-height: 100vh;">
+  <div class="flights-list w-full flex justify-center pb-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-6xl px-2">
     @if (isLoading) {
-      <div class="flex justify-center py-12 w-full">
+      <div class="col-span-full flex justify-center py-12">
         <div class="animate-pulse flex flex-col items-center gap-4">
           <div class="h-12 w-12 bg-blue-200 rounded-full"></div>
           <p class="text-gray-500">Cargando vuelos...</p>
@@ -65,11 +66,11 @@ import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
         @for (flight of filteredFlights; track flight.id) {
           <app-flight-card
             [flight]="flight"
-            class="flight-card-responsive"
+            class="flight-card-grid"
           ></app-flight-card>
         }
       } @else {
-        <div class="w-full flex flex-col items-center py-12">
+        <div class="col-span-full flex flex-col items-center py-12">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
           </svg>
@@ -92,6 +93,7 @@ import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
         </div>
       }
     }
+    </div>
   </div>
 
   <!-- Estado de actualización automática -->
@@ -214,6 +216,10 @@ nav.menu {
   padding-bottom: 2rem;
 }
 
+.flight-card-grid {
+  @apply w-full p-3 bg-[#161622] border border-gray-200 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300;
+  margin: 0 auto;
+}
 
 .shadow-lg {
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
