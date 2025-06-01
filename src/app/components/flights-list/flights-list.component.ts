@@ -75,7 +75,15 @@ import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
           </svg>
           <h3 class="mt-4 text-lg font-medium text-red-500">
             @if (hasError) {
-              Error al cargar los vuelos
+              <div class="col-span-full flex flex-col items-center py-12 animate-fade-in">
+                <mat-icon class="text-red-500 text-4xl mb-4">error_outline</mat-icon>
+                <h3 class="text-lg font-medium text-red-500 mb-2">
+                  Error de conexión con el servidor
+                </h3>
+                <p class="text-gray-400 text-sm mb-4">
+                  Intentando reconectar automáticamente...
+                </p>
+              </div>
             } @else {
               No hay vuelos disponibles
             }
@@ -234,7 +242,6 @@ nav.menu {
 export class FlightsListComponent implements OnInit, OnDestroy {
   // Aquí guardamos datos para dibujar estrellas de fondo (es solo decoración)
   starsArray: { top: string; left: string; opacity: number; transition: boolean }[] = [];
-  private previousFlightsCount: number = 0;
 
   showNoResults = false; // Si no hay resultados en la búsqueda, mostramos un mensaje
   searchTimer: any; // Temporizador para la búsqueda
@@ -247,7 +254,6 @@ export class FlightsListComponent implements OnInit, OnDestroy {
 
   private minLoadTimer: any;
   private maxLoadTimer: any;
-  private loadStartTime: number = 0;
 
   hasError = false; // Si hay un error cargando los vuelos
   flights: Flight[] = []; // Aquí guardamos todos los vuelos que nos llegan del servidor
@@ -261,10 +267,10 @@ export class FlightsListComponent implements OnInit, OnDestroy {
 
   constructor(private tripService: TripService) {}
 
-  private previousFlights: Flight[] = []; // Guardamos la lista anterior para ver si ha cambiado
+  private loadFlightsSubscription?: Subscription;
+
   showUpdateNotification = false; // Si hay vuelos nuevos o se han quitado, mostramos un aviso
   private isComponentAlive = true; // Para saber si el componente sigue activo
-  private pollingInterval = 10000; // Cada cuánto tiempo (en milisegundos) miramos si hay vuelos nuevos (10 segundos)
 
   // Dibuja muchas estrellas para el fondo
   generateStars(): void {
@@ -313,13 +319,16 @@ export class FlightsListComponent implements OnInit, OnDestroy {
   public startInitialLoad(): void {
     this.isLoading = true;
     this.hasError = false;
-    this.flights = []; // Limpiar lista existente
-    this.filteredFlights = []; // Limpiar filtrados
+    this.flights = [];
+    this.filteredFlights = [];
 
-    // Temporizador máximo reducido a 10 segundos
+    // Limpiar cualquier temporizador previo
+    this.clearLoadTimer();
+
+    // Temporizador máximo de 10 segundos
     this.maxLoadTimer = setTimeout(() => {
       if (this.isLoading) {
-        this.handleLoadError(new Error('Timeout de carga'));
+        this.handleLoadError(new Error('Tiempo de espera agotado'));
       }
     }, 10000);
 
@@ -336,20 +345,19 @@ export class FlightsListComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.isComponentAlive = false;
     this.pollingSubscription?.unsubscribe();
-    if (this.searchTimer) clearTimeout(this.searchTimer);
+    this.clearLoadTimer();
+    
+    // Limpiar la subscripción de carga
+    if (this.loadFlightsSubscription) {
+      this.loadFlightsSubscription.unsubscribe();
+    }
   }
 
   // Pedimos la lista de vuelos al servidor
   private loadFlights(): void {
-    this.tripService.getFlights().subscribe({
-      next: (data) => {
-        this.handleFlightData(data);
-        this.clearLoadTimer();
-      },
-      error: (err) => {
-        this.handleLoadError(err);
-        this.retryLoadWithBackoff(3, 2000); // 3 reintentos con backoff
-      }
+    this.loadFlightsSubscription = this.tripService.getFlights().subscribe({
+      next: (data) => this.handleFlightData(data),
+      error: (err) => this.handleLoadError(err)
     });
   }
 
@@ -374,12 +382,16 @@ export class FlightsListComponent implements OnInit, OnDestroy {
 
   // Si hay error cargando los vuelos, lo mostramos y vaciamos las listas
   private handleLoadError(err: any): void {
-    console.error('Error al cargar vuelos:', err);
+    console.error('Error:', err);
+    this.isLoading = false;
     this.hasError = true;
-    this.flights = [];
-    this.filteredFlights = [];
-    this.initialLoad = false;
-    this.clearLoadTimer();
+    
+    // Auto-reintento después de 2 segundos
+    setTimeout(() => {
+      if (this.isComponentAlive && !this.flights.length) {
+        this.startInitialLoad();
+      }
+    }, 2000);
   }
 
   // Cada 10 segundos, pedimos los vuelos al servidor para ver si hay cambios
@@ -412,11 +424,19 @@ export class FlightsListComponent implements OnInit, OnDestroy {
 
   // Cuando recibimos los vuelos, los guardamos y filtramos según la búsqueda
   private handleFlightData(data: Flight[]): void {
-    this.flights = data; // Reemplazar completamente la lista
+    // Cancelar el temporizador de error si los datos llegan
+    this.clearLoadTimer();
+    
+    this.hasError = false;
+    this.flights = data;
     this.filterFlights(this.currentSearch);
     this.isLoading = false;
-    this.clearLoadTimer();
-    this.startPolling(); // Iniciar polling solo después de carga exitosa
+
+    // Iniciar polling solo si es la primera carga
+    if (this.initialLoad) {
+      this.startPolling();
+      this.initialLoad = false;
+    }
   }
 
   // Filtra los vuelos según lo que el usuario ha escrito en la barra de búsqueda
