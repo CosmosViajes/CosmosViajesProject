@@ -67,7 +67,7 @@ import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
             class="flight-card-grid"
           ></app-flight-card>
         } @empty{
-            <div class="col-span-full flex flex-col items-center py-12">
+            <div *ngIf="showNoFlightsMessage" class="col-span-full flex flex-col items-center py-12">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
@@ -75,7 +75,7 @@ import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
                 No hay vuelos disponibles
               </h3>
               <p class="text-gray-600">
-              Se reiniciara automáticamente en 3 segundos.
+                Se reiniciará automáticamente en 3 segundos.
               </p>
               <button 
                 (click)="startInitialLoad()"
