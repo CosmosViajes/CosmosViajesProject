@@ -102,14 +102,6 @@ import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
     }
   </div>
 </div>
-
-  <!-- Estado de actualización automática -->
-  <div *ngIf="lastUpdated" class="text-center text-gray-400 pb-2">
-    Última actualización: {{ lastUpdated | date:'HH:mm:ss' }}
-    <span *ngIf="isCheckingForUpdates" class="ml-2">
-      <mat-icon class="animate-pulse text-sm">autorenew</mat-icon>
-    </span>
-  </div>
 </section>
 `,
   styles: [`
