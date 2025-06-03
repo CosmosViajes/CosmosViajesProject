@@ -309,11 +309,12 @@ export class FlightsListComponent implements OnInit, OnDestroy {
   // Carga inicial de los vuelos
   public startInitialLoad(): void {
     // Resetear estados completamente
-    this.isLoading = true;
-    this.hasError = false;
     this.flights = [];
     this.filteredFlights = [];
+    this.isLoading = true;
+    this.hasError = false;
     this.clearLoadTimer();
+    this.loadFlights();
 
     // Temporizador más corto para desarrollo (15s)
     this.maxLoadTimer = setTimeout(() => {
@@ -321,8 +322,6 @@ export class FlightsListComponent implements OnInit, OnDestroy {
         this.handleLoadError(new Error('Timeout'), true); // Forzar error solo si sigue loading
       }
     }, 15000);
-
-    this.loadFlights();
   }
 
 
