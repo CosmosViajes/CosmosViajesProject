@@ -28,7 +28,7 @@ import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
 
   <!-- Parte Superior SIEMPRE ARRIBA -->
   <div class="top-section relative flex flex-col items-center justify-center z-[20] px-4 pt-4 mb-[30px]">
-    <h2 class="section-title text-3xl md:text-4xl font-extrabold text-center text-yellow-400 mb-2">
+    <h2 class="section-title text-3xl md:text-4xl font-extrabold text-center mb-2">
       PRÓXIMOS VUELOS DISPONIBLES
     </h2>
     <div class="search-section relative w-full max-w-4xl">
@@ -67,13 +67,16 @@ import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
             class="flight-card-grid"
           ></app-flight-card>
         } @empty{
-            <div *ngIf="showNoFlightsMessage" class="col-span-full flex flex-col items-center py-12">
+            <div class="col-span-full flex flex-col items-center py-12">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
-              <h3 class="mt-4 text-lg font-medium text-gray-600">
+              <h3 class="mt-4 text-lg font-medium text-gray-400">
                 No hay vuelos disponibles
               </h3>
+              <p class="text-gray-600">
+              Se reiniciara automáticamente en 3 segundos.
+              </p>
               <button 
                 (click)="startInitialLoad()"
                 class="mt-4 px-4 py-2 bg-yellow-500 text-black rounded-lg hover:bg-yellow-400 transition-colors"
@@ -352,7 +355,7 @@ export class FlightsListComponent implements OnInit, OnDestroy {
     this.isLoading = false;
 
     if (this.isComponentAlive && this.flights.length === 0) {
-      setTimeout(() => this.startInitialLoad(), 3000);
+      setTimeout(() => this.startInitialLoad(), 5000);
     }
   }
 
