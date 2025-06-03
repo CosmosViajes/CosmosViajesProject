@@ -61,17 +61,19 @@ import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
         </div>
       </div>
     } @else {
-      @if (hasError) {
-        <div class="col-span-full flex flex-col items-center py-12">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        @for (flight of filteredFlights; track flight.id) {
+          <app-flight-card
+            [flight]="flight"
+            class="flight-card-grid"
+          ></app-flight-card>
+        } @empty{
+          <div class="col-span-full flex flex-col items-center py-12">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
           </svg>
-          <h3 class="mt-4 text-lg font-medium text-red-500 mb-2">
-            Error de conexión con el servidor
+          <h3 class="mt-4 text-lg font-medium text-gray-600">
+            No hay vuelos disponibles
           </h3>
-          <p class="text-gray-400 text-sm mb-4">
-            Intentando reconectar automáticamente...
-          </p>
           <button 
             (click)="startInitialLoad()"
             class="mt-4 px-4 py-2 bg-yellow-500 text-black rounded-lg hover:bg-yellow-400 transition-colors"
@@ -82,22 +84,6 @@ import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
             </div>
           </button>
         </div>
-      } @else {
-          @for (flight of filteredFlights; track flight.id) {
-            <app-flight-card
-              [flight]="flight"
-              class="flight-card-grid"
-            ></app-flight-card>
-          } @empty{
-           <div class="col-span-full flex flex-col items-center py-12">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            <h3 class="mt-4 text-lg font-medium text-gray-600">
-              No hay vuelos disponibles
-            </h3>
-          </div>
-          }
       }
     }
   </div>
