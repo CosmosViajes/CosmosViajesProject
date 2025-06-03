@@ -258,8 +258,6 @@ export class FlightsListComponent implements OnInit, OnDestroy {
 
   constructor(private tripService: TripService, private cdr: ChangeDetectorRef) {}
 
-  private loadFlightsSubscription?: Subscription;
-
   showUpdateNotification = false; // Si hay vuelos nuevos o se han quitado, mostramos un aviso
   private isComponentAlive = true; // Para saber si el componente sigue activo
 
@@ -308,20 +306,19 @@ export class FlightsListComponent implements OnInit, OnDestroy {
 
   // Carga inicial de los vuelos
   public startInitialLoad(): void {
-    // Resetear estados completamente
-    this.flights = [];
-    this.filteredFlights = [];
     this.isLoading = true;
     this.hasError = false;
+    this.flights = [];
+    this.filteredFlights = [];
     this.clearLoadTimer();
-    this.loadFlights();
 
-    // Temporizador más corto para desarrollo (15s)
     this.maxLoadTimer = setTimeout(() => {
       if (this.isLoading) {
-        this.handleLoadError(new Error('Timeout'), true); // Forzar error solo si sigue loading
+        this.handleLoadError(new Error('Timeout'), true);
       }
     }, 15000);
+
+    this.loadFlights();
   }
 
 
@@ -336,19 +333,16 @@ export class FlightsListComponent implements OnInit, OnDestroy {
     this.isComponentAlive = false;
     this.pollingSubscription?.unsubscribe();
     this.clearLoadTimer();
-    
-    // Limpiar la subscripción de carga
-    if (this.loadFlightsSubscription) {
-      this.loadFlightsSubscription.unsubscribe();
-    }
   }
 
   // Pedimos la lista de vuelos al servidor
-  private loadFlights(): void {
-    this.loadFlightsSubscription = this.tripService.getFlights().subscribe({
-      next: (data) => this.handleFlightData(data),
-      error: (err) => this.handleLoadError(err)
-    });
+  private async loadFlights(): Promise<void> {
+    try {
+      const data = (await this.tripService.getFlights().toPromise()) ?? []; // <-- Añade esto
+      this.handleFlightData(data);
+    } catch (err) {
+      this.handleLoadError(err);
+    }
   }
 
   // Quitamos el temporizador de carga si ya no hace falta
@@ -401,24 +395,19 @@ export class FlightsListComponent implements OnInit, OnDestroy {
   animationState = 'idle'; // Para animaciones de búsqueda
 
   // Cuando recibimos los vuelos, los guardamos y filtramos según la búsqueda
-  public handleFlightData(data: Flight[]): void {
-    // 1. Limpiar temporizador PRIMERO (esto es crítico)
-    this.clearLoadTimer();
-
-    // 2. Actualizar estados Y DATOS de forma atómica
+  private handleFlightData(data: Flight[]): void {
+    this.clearLoadTimer(); // Limpiar primero el temporizador
+    
     this.hasError = false;
     this.isLoading = false;
     this.flights = data;
     this.filterFlights(this.currentSearch);
 
-    // 3. Forzar detección de cambios inmediata
-    this.cdr.detectChanges(); // Necesitarás inyectar ChangeDetectorRef en el constructor
-
-    // 4. Iniciar polling solo si es la primera carga
     if (this.initialLoad) {
       this.startPolling();
       this.initialLoad = false;
     }
+    this.cdr.detectChanges();
   }
 
   // Filtra los vuelos según lo que el usuario ha escrito en la barra de búsqueda
