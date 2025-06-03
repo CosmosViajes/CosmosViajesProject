@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { ProviderService } from '../../services/provider.service';
 import { CompanyService } from '../../services/company.service';
 import { FlightListModalComponent } from '../flight-list-modal/flight-list-modal.component';
@@ -7,32 +7,103 @@ import { FlightListModalComponent } from '../flight-list-modal/flight-list-modal
   selector: 'app-provider-list',
   templateUrl: './provider-list.component.html',
   styleUrl: './provider-list.component.css',
-  imports: [
-    FlightListModalComponent
-  ]
+  imports: [FlightListModalComponent]
 })
-export class ProviderListComponent {
-  providers: any[] = []; // Aquí vamos a guardar la lista de proveedores (empresas que ofrecen viajes)
-  companies: any[] = []; // Aquí vamos a guardar la lista de empresas
-  loading = true; // Esto es true mientras estamos cargando los datos
+export class ProviderListComponent implements OnDestroy {
+  providers: any[] = [];
+  companies: any[] = [];
+  loading = true;
 
-  constructor(private providerService: ProviderService, private companyService: CompanyService) {}
+  showNoProvidersMessage = false;
+  showNoCompaniesMessage = false;
+  private noProvidersTimer: any;
+  private noCompaniesTimer: any;
 
-  // Cuando se abre la página, pedimos la lista de proveedores al servidor
+  constructor(
+    private providerService: ProviderService,
+    private companyService: CompanyService
+  ) {}
+
   ngOnInit() {
+    this.loadProviders();
+    this.loadCompanies();
+  }
+
+  ngOnDestroy() {
+    this.clearTimers();
+  }
+
+  private loadProviders(): void {
     this.providerService.getProviders().subscribe({
       next: (data) => {
-        this.providers = data; // Guardamos la lista de proveedores
-        this.loading = false;  // Ya hemos terminado de cargar
+        this.providers = data;
+        this.checkLoadingState();
+        this.manageProvidersMessage();
       },
-      error: () => this.loading = false // Si hay error, dejamos de cargar
+      error: () => {
+        this.loading = false;
+        this.manageProvidersMessage();
+      }
     });
+  }
+
+  private loadCompanies(): void {
     this.companyService.getCompanies().subscribe({
       next: (data) => {
-        this.companies = data; // Guardamos la lista de proveedores
-        this.loading = false;  // Ya hemos terminado de cargar
+        this.companies = data;
+        this.checkLoadingState();
+        this.manageCompaniesMessage();
       },
-      error: () => this.loading = false // Si hay error, dejamos de cargar
+      error: () => {
+        this.loading = false;
+        this.manageCompaniesMessage();
+      }
     });
+  }
+
+  private checkLoadingState(): void {
+    if (this.providers.length > 0 || this.companies.length > 0) {
+      this.loading = false;
+    }
+  }
+
+  private manageProvidersMessage(): void {
+    if (this.providers.length === 0) {
+      this.clearTimer('providers');
+      this.noProvidersTimer = setTimeout(() => {
+        this.showNoProvidersMessage = true;
+      }, 2500);
+    } else {
+      this.showNoProvidersMessage = false;
+      this.clearTimer('providers');
+    }
+  }
+
+  private manageCompaniesMessage(): void {
+    if (this.companies.length === 0) {
+      this.clearTimer('companies');
+      this.noCompaniesTimer = setTimeout(() => {
+        this.showNoCompaniesMessage = true;
+      }, 2500);
+    } else {
+      this.showNoCompaniesMessage = false;
+      this.clearTimer('companies');
+    }
+  }
+
+  private clearTimer(type: 'providers' | 'companies'): void {
+    if (type === 'providers' && this.noProvidersTimer) {
+      clearTimeout(this.noProvidersTimer);
+      this.noProvidersTimer = null;
+    }
+    if (type === 'companies' && this.noCompaniesTimer) {
+      clearTimeout(this.noCompaniesTimer);
+      this.noCompaniesTimer = null;
+    }
+  }
+
+  private clearTimers(): void {
+    this.clearTimer('providers');
+    this.clearTimer('companies');
   }
 }
