@@ -67,24 +67,24 @@ import { switchMap, takeWhile, distinctUntilChanged } from 'rxjs/operators';
             class="flight-card-grid"
           ></app-flight-card>
         } @empty{
-          <div class="col-span-full flex flex-col items-center py-12">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-          </svg>
-          <h3 class="mt-4 text-lg font-medium text-gray-600">
-            No hay vuelos disponibles
-          </h3>
-          <button 
-            (click)="startInitialLoad()"
-            class="mt-4 px-4 py-2 bg-yellow-500 text-black rounded-lg hover:bg-yellow-400 transition-colors"
-          >
-            <div class="flex items-center gap-2">
-              <mat-icon>refresh</mat-icon>
-              Intentar de nuevo
+            <div *ngIf="showNoFlightsMessage" class="col-span-full flex flex-col items-center py-12">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <h3 class="mt-4 text-lg font-medium text-gray-600">
+                No hay vuelos disponibles
+              </h3>
+              <button 
+                (click)="startInitialLoad()"
+                class="mt-4 px-4 py-2 bg-yellow-500 text-black rounded-lg hover:bg-yellow-400 transition-colors"
+              >
+                <div class="flex items-center gap-2">
+                  <mat-icon>refresh</mat-icon>
+                  Intentar de nuevo
+                </div>
+              </button>
             </div>
-          </button>
-        </div>
-      }
+          }
     }
   </div>
 </div>
@@ -218,6 +218,10 @@ nav.menu {
 `],
 })
 export class FlightsListComponent implements OnInit, OnDestroy {
+
+  private noFlightsTimer: any;
+  showNoFlightsMessage = false;
+
   // Aquí guardamos datos para dibujar estrellas de fondo (es solo decoración)
   starsArray: { top: string; left: string; opacity: number; transition: boolean }[] = [];
 
@@ -382,12 +386,25 @@ export class FlightsListComponent implements OnInit, OnDestroy {
 
   // Cuando recibimos los vuelos, los guardamos y filtramos según la búsqueda
   private handleFlightData(data: Flight[]): void {
-    this.clearLoadTimer(); // Limpiar primero el temporizador
-    
+    this.clearLoadTimer();
     this.hasError = false;
     this.isLoading = false;
     this.flights = data;
     this.filterFlights(this.currentSearch);
+
+    // Si NO hay vuelos, esperar 2.5 segundos antes de mostrar el mensaje
+    if (this.flights.length === 0) {
+      this.showNoFlightsMessage = false;
+      if (this.noFlightsTimer) clearTimeout(this.noFlightsTimer);
+      this.noFlightsTimer = setTimeout(() => {
+        this.showNoFlightsMessage = true;
+        this.cdr.detectChanges();
+      }, 2500); // 2.5 segundos (ajusta a 2000 o 3000 si prefieres)
+    } else {
+      // Si hay vuelos, mostrar la lista de inmediato y ocultar mensaje
+      this.showNoFlightsMessage = false;
+      if (this.noFlightsTimer) clearTimeout(this.noFlightsTimer);
+    }
 
     if (this.initialLoad) {
       this.startPolling();
